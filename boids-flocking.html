@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>鸟群的涌现 · Emergence of Flocking</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0e1a; font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif; }
+  canvas { display: block; }
+
+  #panel {
+    position: fixed; top: 20px; left: 20px; width: 260px;
+    background: rgba(12, 18, 34, 0.82); backdrop-filter: blur(12px);
+    border: 1px solid rgba(120, 170, 255, 0.18); border-radius: 14px;
+    padding: 18px 20px; color: #cfd8ec; user-select: none;
+    transition: transform .35s ease, opacity .35s ease;
+  }
+  #panel.hidden { transform: translateX(-300px); opacity: 0; pointer-events: none; }
+  #panel h1 { font-size: 15px; font-weight: 600; color: #e8f0ff; letter-spacing: 1px; margin-bottom: 4px; }
+  #panel .sub { font-size: 11px; color: #7a89ad; margin-bottom: 14px; line-height: 1.5; }
+
+  .rule { margin-bottom: 12px; }
+  .rule label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+  .rule label .val { color: #7ec8ff; font-variant-numeric: tabular-nums; }
+  .rule .desc { font-size: 10px; color: #5d6c8f; margin-bottom: 4px; }
+  input[type=range] { width: 100%; height: 4px; -webkit-appearance: none; appearance: none;
+    background: rgba(120,170,255,.2); border-radius: 2px; outline: none; cursor: pointer; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px;
+    border-radius: 50%; background: #7ec8ff; box-shadow: 0 0 8px rgba(126,200,255,.7); cursor: pointer; }
+
+  .row { display: flex; gap: 8px; margin-top: 14px; }
+  button {
+    flex: 1; padding: 7px 0; font-size: 12px; color: #cfe2ff; cursor: pointer;
+    background: rgba(126, 200, 255, 0.1); border: 1px solid rgba(126, 200, 255, 0.3);
+    border-radius: 8px; transition: background .2s;
+  }
+  button:hover { background: rgba(126, 200, 255, 0.25); }
+
+  .modes { display: flex; gap: 6px; margin-top: 12px; }
+  .mode { flex: 1; text-align: center; font-size: 11px; padding: 6px 0; border-radius: 7px;
+    cursor: pointer; border: 1px solid rgba(120,170,255,.2); color: #8fa3c8; transition: all .2s; }
+  .mode.active { background: rgba(126,200,255,.22); color: #dff0ff; border-color: rgba(126,200,255,.55); }
+
+  #toggle {
+    position: fixed; top: 20px; left: 20px; z-index: 10; width: 34px; height: 34px;
+    border-radius: 9px; display: flex; align-items: center; justify-content: center;
+    background: rgba(12,18,34,.82); border: 1px solid rgba(120,170,255,.25);
+    color: #9fc4ff; font-size: 16px; cursor: pointer;
+  }
+
+  #hint {
+    position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; color: rgba(160, 180, 220, 0.55); letter-spacing: 1px; pointer-events: none;
+  }
+  #stats { position: fixed; top: 20px; right: 22px; font-size: 11px; color: rgba(140,165,210,.7);
+    text-align: right; font-variant-numeric: tabular-nums; line-height: 1.7; pointer-events: none; }
+  #stats b { color: #7ec8ff; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div id="toggle">☰</div>
+<div id="panel">
+  <h1>鸟群的涌现</h1>
+  <div class="sub">每只鸟只遵循三条局部规则，<br>宏大的群体秩序由此「涌现」。</div>
+
+  <div class="rule">
+    <label><span>分离 Separation</span><span class="val" id="v-sep">1.5</span></label>
+    <div class="desc">避免与邻居靠得太近</div>
+    <input type="range" id="r-sep" min="0" max="4" step="0.1" value="1.5">
+  </div>
+  <div class="rule">
+    <label><span>对齐 Alignment</span><span class="val" id="v-ali">1.0</span></label>
+    <div class="desc">与邻居的平均方向保持一致</div>
+    <input type="range" id="r-ali" min="0" max="4" step="0.1" value="1.0">
+  </div>
+  <div class="rule">
+    <label><span>聚集 Cohesion</span><span class="val" id="v-coh">1.0</span></label>
+    <div class="desc">向邻居的平均位置靠拢</div>
+    <input type="range" id="r-coh" min="0" max="4" step="0.1" value="1.0">
+  </div>
+  <div class="rule">
+    <label><span>感知半径 Vision</span><span class="val" id="v-vis">60</span></label>
+    <div class="desc">每只鸟能“看见”的范围 (px)</div>
+    <input type="range" id="r-vis" min="20" max="140" step="5" value="60">
+  </div>
+  <div class="rule">
+    <label><span>鸟群数量 Flock</span><span class="val" id="v-num">200</span></label>
+    <input type="range" id="r-num" min="20" max="600" step="10" value="200">
+  </div>
+
+  <div class="modes">
+    <div class="mode active" data-m="repel">鼠标驱散</div>
+    <div class="mode" data-m="attract">鼠标吸引</div>
+    <div class="mode" data-m="none">不交互</div>
+  </div>
+
+  <div class="row">
+    <button id="btn-reset">重置</button>
+    <button id="btn-pause">暂停</button>
+    <button id="btn-grid">邻居线: 关</button>
+  </div>
+</div>
+
+<div id="stats"></div>
+<div id="hint">三条简单规则 → 复杂群体秩序 · 移动鼠标与鸟群互动</div>
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+addEventListener('resize', resize); resize();
+
+// ---------- 参数 ----------
+const P = {
+  separation: 1.5, alignment: 1.0, cohesion: 1.0,
+  vision: 60, count: 200,
+  maxSpeed: 3.4, maxForce: 0.06,
+  mouseMode: 'repel', paused: false, showGrid: false
+};
+
+const mouse = { x: -9999, y: -9999 };
+addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+addEventListener('mouseleave', () => { mouse.x = -9999; mouse.y = -9999; });
+addEventListener('touchmove', e => { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; }, {passive: true});
+
+// ---------- 空间哈希网格（性能优化） ----------
+const CELL = 80;
+let grid = new Map();
+function gridKey(x, y) { return (x / CELL | 0) + ',' + (y / CELL | 0); }
+function rebuildGrid() {
+  grid.clear();
+  for (const b of birds) {
+    const k = gridKey(b.x, b.y);
+    if (!grid.has(k)) grid.set(k, []);
+    grid.get(k).push(b);
+  }
+}
+function neighbors(b) {
+  const cx = b.x / CELL | 0, cy = b.y / CELL | 0, out = [];
+  for (let i = -1; i <= 1; i++) for (let j = -1; j <= 1; j++) {
+    const cell = grid.get((cx + i) + ',' + (cy + j));
+    if (cell) out.push(...cell);
+  }
+  return out;
+}
+
+// ---------- Boid ----------
+class Boid {
+  constructor() {
+    this.x = Math.random() * W; this.y = Math.random() * H;
+    const a = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(a) * 2; this.vy = Math.sin(a) * 2;
+    this.hue = 190 + Math.random() * 40;   // 蓝青色系
+    this.size = 3 + Math.random() * 2.5;
+    this.wingPhase = Math.random() * Math.PI * 2;
+  }
+  flock(all) {
+    const v2 = P.vision * P.vision;
+    let sepX = 0, sepY = 0, aliX = 0, aliY = 0, cohX = 0, cohY = 0, n = 0;
+    for (const o of all) {
+      if (o === b) continue;
+      const dx = this.x - o.x, dy = this.y - o.y, d2 = dx * dx + dy * dy;
+      if (d2 > v2 || d2 === 0) continue;
+      n++;
+      const d = Math.sqrt(d2);
+      sepX += dx / (d * d); sepY += dy / (d * d);       // 分离：越近排斥越强
+      aliX += o.vx; aliY += o.vy;                        // 对齐：累积邻居速度
+      cohX += o.x; cohY += o.y;                          // 聚集：累积邻居位置
+      if (P.showGrid) links.push([this, o, d]);
+    }
+    let ax = 0, ay = 0;
+    if (n > 0) {
+      // 分离
+      let m = Math.hypot(sepX, sepY);
+      if (m > 0) { ax += (sepX / m * P.maxSpeed - this.vx) * P.separation * 0.06;
+                   ay += (sepY / m * P.maxSpeed - this.vy) * P.separation * 0.06; }
+      // 对齐
+      aliX /= n; aliY /= n; m = Math.hypot(aliX, aliY);
+      if (m > 0) { ax += (aliX / m * P.maxSpeed - this.vx) * P.alignment * 0.05;
+                   ay += (aliY / m * P.maxSpeed - this.vy) * P.alignment * 0.05; }
+      // 聚集
+      cohX = cohX / n - this.x; cohY = cohY / n - this.y; m = Math.hypot(cohX, cohY);
+      if (m > 0) { ax += (cohX / m * P.maxSpeed - this.vx) * P.cohesion * 0.04;
+                   ay += (cohY / m * P.maxSpeed - this.vy) * P.cohesion * 0.04; }
+    }
+    // 鼠标交互
+    const mdx = this.x - mouse.x, mdy = this.y - mouse.y;
+    const md2 = mdx * mdx + mdy * mdy, MR = 160;
+    if (md2 < MR * MR && md2 > 0) {
+      const md = Math.sqrt(md2), f = (1 - md / MR);
+      if (P.mouseMode === 'repel')  { ax += mdx / md * f * 1.4; ay += mdy / md * f * 1.4; }
+      if (P.mouseMode === 'attract'){ ax -= mdx / md * f * 0.5; ay -= mdy / md * f * 0.5; }
+    }
+    // 限制转向力
+    const fm = Math.hypot(ax, ay);
+    if (fm > P.maxForce * 4) { ax = ax / fm * P.maxForce * 4; ay = ay / fm * P.maxForce * 4; }
+    this.vx += ax; this.vy += ay;
+  }
+  update() {
+    const sp = Math.hypot(this.vx, this.vy);
+    if (sp > P.maxSpeed) { this.vx = this.vx / sp * P.maxSpeed; this.vy = this.vy / sp * P.maxSpeed; }
+    if (sp < 1.2) { this.vx = this.vx / (sp || 1) * 1.2; this.vy = this.vy / (sp || 1) * 1.2; }
+    this.x += this.vx; this.y += this.vy;
+    // 边界环绕
+    if (this.x < -20) this.x = W + 20; if (this.x > W + 20) this.x = -20;
+    if (this.y < -20) this.y = H + 20; if (this.y > H + 20) this.y = -20;
+    this.wingPhase += 0.35 + Math.hypot(this.vx, this.vy) * 0.08;
+  }
+  draw() {
+    const a = Math.atan2(this.vy, this.vx);
+    const s = this.size;
+    const wing = Math.sin(this.wingPhase) * s * 0.9;   // 翅膀扇动
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(a);
+    const sp = Math.hypot(this.vx, this.vy);
+    ctx.fillStyle = `hsla(${this.hue}, 75%, ${58 + sp * 3}%, 0.92)`;
+    ctx.beginPath();
+    ctx.moveTo(s * 2.2, 0);
+    ctx.lineTo(-s * 1.1, s * 0.55 + wing * 0.35);
+    ctx.lineTo(-s * 0.5, 0);
+    ctx.lineTo(-s * 1.1, -s * 0.55 - wing * 0.35);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+// ---------- 初始化 ----------
+let birds = [], links = [];
+let b; // placeholder used in flock loop
+function init(n) {
+  birds = [];
+  for (let i = 0; i < n; i++) birds.push(new Boid());
+}
+init(P.count);
+
+// ---------- 主循环 ----------
+let lastT = performance.now(), fps = 60;
+function loop(t) {
+  requestAnimationFrame(loop);
+  const dt = t - lastT; lastT = t;
+  fps = fps * 0.95 + (1000 / Math.max(dt, 1)) * 0.05;
+
+  if (!P.paused) {
+    rebuildGrid();
+    links.length = 0;
+    for (b of birds) { b.flock(neighbors(b)); b.update(); }
+  }
+
+  // 背景（拖尾效果）
+  ctx.fillStyle = 'rgba(10, 14, 26, 0.35)';
+  ctx.fillRect(0, 0, W, H);
+
+  // 邻居连线（可视化局部感知）
+  if (P.showGrid) {
+    ctx.lineWidth = 0.5;
+    for (const [a, bb, d] of links) {
+      ctx.strokeStyle = `rgba(126, 200, 255, ${0.14 * (1 - d / P.vision)})`;
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(bb.x, bb.y); ctx.stroke();
+    }
+  }
+  for (b of birds) b.draw();
+
+  // 鼠标光圈
+  if (P.mouseMode !== 'none' && mouse.x > 0) {
+    ctx.beginPath(); ctx.arc(mouse.x, mouse.y, 160, 0, Math.PI * 2);
+    ctx.strokeStyle = P.mouseMode === 'repel' ? 'rgba(255,120,120,0.15)' : 'rgba(140,255,180,0.15)';
+    ctx.lineWidth = 1.5; ctx.stroke();
+  }
+
+  stats.innerHTML = `FPS <b>${fps.toFixed(0)}</b> · 个体 <b>${birds.length}</b>`;
+}
+requestAnimationFrame(loop);
+
+// ---------- UI 绑定 ----------
+const $ = id => document.getElementById(id);
+function bindRange(id, key, valId, fmt = v => v) {
+  $(id).addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    if (key === 'count') { init(v); }
+    P[key] = v; $(valId).textContent = fmt(v);
+  });
+}
+bindRange('r-sep', 'separation', 'v-sep');
+bindRange('r-ali', 'alignment', 'v-ali');
+bindRange('r-coh', 'cohesion', 'v-coh');
+bindRange('r-vis', 'vision', 'v-vis', v => v);
+bindRange('r-num', 'count', 'v-num', v => v);
+
+document.querySelectorAll('.mode').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.mode').forEach(x => x.classList.remove('active'));
+    el.classList.add('active');
+    P.mouseMode = el.dataset.m;
+  });
+});
+$('btn-reset').onclick = () => init(P.count);
+$('btn-pause').onclick = e => { P.paused = !P.paused; e.target.textContent = P.paused ? '继续' : '暂停'; };
+$('btn-grid').onclick = e => { P.showGrid = !P.showGrid; e.target.textContent = '邻居线: ' + (P.showGrid ? '开' : '关'); };
+$('toggle').onclick = () => $('panel').classList.toggle('hidden');
+addEventListener('keydown', e => { if (e.code === 'Space') { e.preventDefault(); $('btn-pause').click(); } });
+</script>
+</body>
+</html>
