@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Showroom · 作品陈列室</title>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #181b22;
+      --card-hover: #1f232d;
+      --border: #2a2f3a;
+      --text: #e8eaf0;
+      --muted: #9aa3b2;
+      --accent: #6ea8fe;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      min-height: 100dvh;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 48px 24px 64px;
+    }
+
+    header {
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-size: clamp(1.6rem, 2.5vw + 1rem, 2rem);
+      letter-spacing: 0.02em;
+    }
+
+    header p {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: clamp(0.85rem, 1vw + 0.6rem, 1rem);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    a.card {
+      display: block;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 22px;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+    }
+
+    /* hover lift only on devices with a real pointer (avoids sticky hover on touch) */
+    @media (hover: hover) {
+      a.card:hover {
+        background: var(--card-hover);
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 4px;
+    }
+
+    .card .en {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 400;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin: 8px 0 12px;
+    }
+
+    .tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 0.72rem;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 999px;
+      padding: 1px 10px;
+      opacity: 0.85;
+    }
+
+    .section-title {
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin: 36px 0 14px;
+    }
+
+    .section-title:first-of-type {
+      margin-top: 0;
+    }
+
+    footer {
+      margin-top: 56px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: center;
+    }
+
+    /* phones: single column, tighter spacing */
+    @media (max-width: 640px) {
+      .wrap {
+        padding: 32px 16px 48px;
+      }
+
+      header {
+        margin-bottom: 28px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      a.card {
+        padding: 16px 18px;
+      }
+
+      .section-title {
+        margin: 28px 0 12px;
+      }
+
+      footer {
+        margin-top: 40px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Showroom</h1>
+      <p>交互小作品陈列室 · A collection of interactive web demos</p>
+    </header>
+
+    <h3 class="section-title">游戏 · Games</h3>
+    <div class="grid">
+      <a class="card" href="game/dorm-brawl/">
+        <h2>宿舍大乱斗 <span class="en">Dorm Brawl</span></h2>
+        <p>多人在线俯视角射击小游戏，支持真人玩家与 AI 机器人同场对战。（须另行启动后端服务器）</p>
+        <div class="tags"><span class="tag">联机</span><span class="tag">游戏</span><span class="tag">需后端</span></div>
+      </a>
+
+      <a class="card" href="game/tank-battle.html">
+        <h2>霓虹坦克大战 <span class="en">Neon Tank</span></h2>
+        <p>霓虹风格的坦克射击小游戏。</p>
+        <div class="tags"><span class="tag">游戏</span></div>
+      </a>
+
+      <a class="card" href="game/game-snake.html">
+        <h2>贪吃蛇 <span class="en">Snake</span></h2>
+        <p>经典贪吃蛇小游戏。</p>
+        <div class="tags"><span class="tag">游戏</span></div>
+      </a>
+    </div>
+
+    <h3 class="section-title">课业 · Schoolwork</h3>
+    <div class="grid">
+      <a class="card" href="schoolwork/calculus-interactive/">
+        <h2>看见微积分</h2>
+        <p>写给大一新生的单变量微积分交互入门：速度、加速度、变化率与积分。</p>
+        <div class="tags"><span class="tag">交互教学</span></div>
+      </a>
+
+      <a class="card" href="schoolwork/mechanical-drawing-lab.html">
+        <h2>机械制图互动课堂</h2>
+        <p>看得懂的工程语言——视图、投影与标注的交互式讲解。</p>
+        <div class="tags"><span class="tag">交互教学</span></div>
+      </a>
+    </div>
+
+    <h3 class="section-title">模拟与可视化 · Simulation</h3>
+    <div class="grid">
+      <a class="card" href="simulation/boids-flocking.html">
+        <h2>鸟群的涌现 <span class="en">Emergence of Flocking</span></h2>
+        <p>分离、对齐、聚集三条简单规则涌现出的群体行为模拟（Boids）。</p>
+        <div class="tags"><span class="tag">仿真</span></div>
+      </a>
+
+      <a class="card" href="simulation/dormitory-social-network.html">
+        <h2>宿舍楼社交网络 <span class="en">Dormitory Social Network</span></h2>
+        <p>40 个学生、10 间宿舍的力导向关系图：宿舍内强连接，宿舍间弱连接。</p>
+        <div class="tags"><span class="tag">可视化</span></div>
+      </a>
+    </div>
+
+    <h3 class="section-title">工具 · Utilities</h3>
+    <div class="grid">
+      <a class="card" href="utils/net-test.html">
+        <h2>网络性能自测 <span class="en">Network Test</span></h2>
+        <p>纯前端实现的下载/延迟测速页面。</p>
+        <div class="tags"><span class="tag">工具</span></div>
+      </a>
+    </div>
+
+    <footer>Showroom · Built with vanilla HTML / JS</footer>
+  </div>
+<!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7f217925546646b2ac70e0e1ef877263"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+
+</html>

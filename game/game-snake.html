@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>贪吃蛇 · Snake</title>
+  <style>
+    :root {
+      --bg: #0f1220;
+      --panel: #171b2e;
+      --accent: #4ade80;
+      --accent-dim: #22c55e;
+      --food: #f87171;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      height: 100%;
+      background: radial-gradient(1200px 600px at 50% -10%, #1e2440 0%, var(--bg) 60%);
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      touch-action: manipulation;
+    }
+
+    .wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 22px;
+      letter-spacing: 4px;
+      font-weight: 700;
+      background: linear-gradient(90deg, var(--accent), #38bdf8);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hud {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .hud .box {
+      background: var(--panel);
+      border: 1px solid #2a3050;
+      border-radius: 10px;
+      padding: 6px 14px;
+      font-size: 14px;
+      min-width: 92px;
+      text-align: center;
+    }
+
+    .hud .box .label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: 1px;
+    }
+
+    .hud .box .val {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .board {
+      position: relative;
+      border-radius: 14px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, .5), 0 0 0 1px #2a3050;
+    }
+
+    canvas {
+      display: block;
+      background: #12162a;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(10, 12, 24, .78);
+      backdrop-filter: blur(4px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      text-align: center;
+      transition: opacity .2s;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .overlay .title {
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .overlay .sub {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    .overlay .score-final {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    button {
+      background: linear-gradient(180deg, var(--accent), var(--accent-dim));
+      color: #052e16;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 26px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(74, 222, 128, .35);
+      transition: transform .1s, box-shadow .1s;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(74, 222, 128, .45);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .tips {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    kbd {
+      background: #232945;
+      border: 1px solid #38405f;
+      border-bottom-width: 2px;
+      border-radius: 5px;
+      padding: 1px 6px;
+      font-size: 11px;
+      font-family: inherit;
+      color: var(--text);
+    }
+
+    .dpad {
+      display: none;
+      grid-template-columns: repeat(3, 56px);
+      grid-template-rows: repeat(2, 56px);
+      gap: 8px;
+    }
+
+    .dpad button {
+      background: var(--panel);
+      color: var(--text);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, .3), 0 0 0 1px #2a3050;
+      font-size: 22px;
+      padding: 0;
+      border-radius: 12px;
+    }
+
+    .dpad .up {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    .dpad .left {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    .dpad .down {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    .dpad .right {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
+    .tips .tc {
+      display: none;
+    }
+
+    @media (pointer: coarse) {
+      .dpad {
+        display: grid;
+      }
+
+      .tips .kb {
+        display: none;
+      }
+
+      .tips .tc {
+        display: inline;
+      }
+    }
+
+    /* 矮屏（手机横屏等）：精简布局保证棋盘可见 */
+    @media (max-height: 520px) {
+
+      h1,
+      .tips {
+        display: none;
+      }
+
+      .wrap {
+        gap: 8px;
+        padding: 8px;
+      }
+
+      .hud .box {
+        padding: 4px 10px;
+        min-width: 72px;
+      }
+
+      .dpad {
+        grid-template-columns: repeat(3, 44px);
+        grid-template-rows: repeat(2, 44px);
+        gap: 6px;
+      }
+
+      .dpad button {
+        font-size: 18px;
+        border-radius: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <h1>贪 吃 蛇</h1>
+
+    <div class="hud">
+      <div class="box">
+        <div class="label">得分 SCORE</div>
+        <div class="val" id="score">0</div>
+      </div>
+      <div class="box">
+        <div class="label">最高 BEST</div>
+        <div class="val" id="best">0</div>
+      </div>
+      <div class="box">
+        <div class="label">速度 SPEED</div>
+        <div class="val" id="speed">1</div>
+      </div>
+    </div>
+
+    <div class="board">
+      <canvas id="canvas" width="480" height="480"></canvas>
+      <div class="overlay" id="overlay">
+        <div class="title" id="ovTitle">准备开始</div>
+        <div class="score-final hidden" id="ovScore"></div>
+        <div class="sub" id="ovSub">用方向键或 WASD 控制蛇的移动<br>开始后按方向键才会出发，吃掉红色食物得分</div>
+        <button id="startBtn">开始游戏</button>
+      </div>
+    </div>
+
+    <div class="dpad">
+      <button class="up" data-dir="up">▲</button>
+      <button class="left" data-dir="left">◀</button>
+      <button class="down" data-dir="down">▼</button>
+      <button class="right" data-dir="right">▶</button>
+    </div>
+
+    <div class="tips">
+      <span class="kb"><kbd>↑</kbd><kbd>↓</kbd><kbd>←</kbd><kbd>→</kbd> /
+        <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> 移动 · <kbd>Space</kbd> 暂停</span>
+      <span class="tc">手机端支持滑动手势或下方方向键操作</span>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const CELL = 24;
+      const COLS = 20, ROWS = 20;
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+
+      // 高分屏适配：内部分辨率固定，CSS 尺寸随视口缩放
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = COLS * CELL * dpr;
+      canvas.height = ROWS * CELL * dpr;
+      ctx.scale(dpr, dpr);
+
+      // 自适应：棋盘占满剩余视口空间（横竖屏、窗口缩放均生效）
+      const wrapEl = document.querySelector('.wrap');
+      const boardEl = document.querySelector('.board');
+      function fitCanvas() {
+        const cs = getComputedStyle(wrapEl);
+        const gap = parseFloat(cs.rowGap || cs.gap) || 14;
+        let others = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+        let visible = 0;
+        for (const el of wrapEl.children) {
+          if (el === boardEl || getComputedStyle(el).display === 'none') continue;
+          others += el.offsetHeight;
+          visible++;
+        }
+        others += gap * visible;
+        const avail = Math.min(window.innerWidth - 32, window.innerHeight - others - 8);
+        const size = Math.max(180, Math.floor(avail));
+        canvas.style.width = canvas.style.height = size + 'px';
+      }
+      window.addEventListener('resize', fitCanvas);
+      window.addEventListener('orientationchange', () => setTimeout(fitCanvas, 60));
+      fitCanvas();
+
+      const scoreEl = document.getElementById('score');
+      const bestEl = document.getElementById('best');
+      const speedEl = document.getElementById('speed');
+      const overlay = document.getElementById('overlay');
+      const ovTitle = document.getElementById('ovTitle');
+      const ovSub = document.getElementById('ovSub');
+      const ovScore = document.getElementById('ovScore');
+      const startBtn = document.getElementById('startBtn');
+
+      let snake, dir, nextDir, food, score, speedLevel, alive, running, paused;
+      let timer = null;
+      let best = +(localStorage.getItem('snake_best') || 0);
+      bestEl.textContent = best;
+
+      const BASE_INTERVAL = 160;   // 初始帧间隔 ms
+      const MIN_INTERVAL = 60;
+
+      function reset() {
+        snake = [{ x: 10, y: 10 }, { x: 9, y: 10 }, { x: 8, y: 10 }];
+        dir = { x: 1, y: 0 };
+        nextDir = dir;
+        score = 0;
+        speedLevel = 1;
+        alive = true;
+        paused = false;
+        placeFood();
+        updateHud();
+        draw();
+      }
+
+      function interval() {
+        return Math.max(MIN_INTERVAL, BASE_INTERVAL - (speedLevel - 1) * 12);
+      }
+
+      function start() {
+        reset();
+        running = true;
+        overlay.classList.add('hidden');
+        // 蛇先静止，按第一个方向键后才开始移动
+        clearInterval(timer);
+        timer = null;
+        draw();
+      }
+
+      function loop() {
+        clearInterval(timer);
+        timer = setInterval(step, interval());
+      }
+
+      function placeFood() {
+        while (true) {
+          const f = {
+            x: Math.floor(Math.random() * COLS),
+            y: Math.floor(Math.random() * ROWS)
+          };
+          if (!snake.some(s => s.x === f.x && s.y === f.y)) { food = f; return; }
+        }
+      }
+
+      function step() {
+        if (!running || paused || !alive) return;
+
+        dir = nextDir;
+        const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+        // 撞墙或撞自己
+        const hitWall = head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS;
+        const hitSelf = snake.some((s, i) => i < snake.length - 1 && s.x === head.x && s.y === head.y);
+        if (hitWall || hitSelf) return gameOver();
+
+        snake.unshift(head);
+
+        if (head.x === food.x && head.y === food.y) {
+          score += 10;
+          // 每 50 分升一级
+          const newLevel = Math.floor(score / 50) + 1;
+          if (newLevel !== speedLevel) {
+            speedLevel = newLevel;
+            loop(); // 重设计时器以加速
+          }
+          placeFood();
+        } else {
+          snake.pop();
+        }
+
+        updateHud();
+        draw();
+      }
+
+      function gameOver() {
+        alive = false;
+        running = false;
+        clearInterval(timer);
+        if (score > best) {
+          best = score;
+          localStorage.setItem('snake_best', best);
+          bestEl.textContent = best;
+        }
+        ovTitle.textContent = '游戏结束';
+        ovScore.textContent = score;
+        ovScore.classList.remove('hidden');
+        ovSub.textContent = score >= best && score > 0 ? '🏆 新纪录！再接再厉' : '再来一局挑战最高分吧';
+        startBtn.textContent = '重新开始';
+        overlay.classList.remove('hidden');
+      }
+
+      function updateHud() {
+        scoreEl.textContent = score;
+        speedEl.textContent = speedLevel;
+      }
+
+      function draw() {
+        // 背景
+        ctx.fillStyle = '#12162a';
+        ctx.fillRect(0, 0, COLS * CELL, ROWS * CELL);
+
+        // 网格
+        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        ctx.lineWidth = 1;
+        for (let i = 1; i < COLS; i++) {
+          ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, ROWS * CELL); ctx.stroke();
+        }
+        for (let i = 1; i < ROWS; i++) {
+          ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(COLS * CELL, i * CELL); ctx.stroke();
+        }
+
+        // 食物（带光晕的圆）
+        const fx = food.x * CELL + CELL / 2, fy = food.y * CELL + CELL / 2;
+        ctx.save();
+        ctx.shadowColor = '#f87171';
+        ctx.shadowBlur = 12;
+        ctx.fillStyle = '#f87171';
+        ctx.beginPath();
+        ctx.arc(fx, fy, CELL / 2 - 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        // 蛇身（头亮尾暗渐变）
+        for (let i = snake.length - 1; i >= 0; i--) {
+          const s = snake[i];
+          const t = i / Math.max(snake.length - 1, 1);
+          const r = Math.round(74 - 30 * t);
+          const g = Math.round(222 - 120 * t);
+          const b = Math.round(128 - 48 * t);
+          ctx.fillStyle = `rgb(${r},${g},${b})`;
+          const pad = i === 0 ? 2 : 3;
+          roundRect(s.x * CELL + pad, s.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 6);
+          ctx.fill();
+        }
+
+        // 蛇眼
+        const h = snake[0];
+        ctx.fillStyle = '#0f1220';
+        const ex = h.x * CELL + CELL / 2, ey = h.y * CELL + CELL / 2;
+        const off = 4, size = 2.6;
+        // 根据方向确定眼睛位置
+        let e1, e2;
+        if (dir.x === 1) { e1 = [ex + off, ey - off]; e2 = [ex + off, ey + off]; }
+        else if (dir.x === -1) { e1 = [ex - off, ey - off]; e2 = [ex - off, ey + off]; }
+        else if (dir.y === -1) { e1 = [ex - off, ey - off]; e2 = [ex + off, ey - off]; }
+        else { e1 = [ex - off, ey + off]; e2 = [ex + off, ey + off]; }
+        for (const [px, py] of [e1, e2]) {
+          ctx.beginPath(); ctx.arc(px, py, size, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+
+      function roundRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.arcTo(x + w, y, x + w, y + h, r);
+        ctx.arcTo(x + w, y + h, x, y + h, r);
+        ctx.arcTo(x, y + h, x, y, r);
+        ctx.arcTo(x, y, x + w, y, r);
+        ctx.closePath();
+      }
+
+      // —— 控制 ——
+      const DIRS = {
+        up: { x: 0, y: -1 },
+        down: { x: 0, y: 1 },
+        left: { x: -1, y: 0 },
+        right: { x: 1, y: 0 }
+      };
+
+      function setDir(name) {
+        const d = DIRS[name];
+        if (!d) return;
+        // 尚未开动：任意方向均可作为初始方向
+        if (running && !timer) {
+          dir = d;
+          nextDir = d;
+          loop();
+          return;
+        }
+        // 禁止 180 度掉头
+        if (d.x === -dir.x && d.y === -dir.y) return;
+        nextDir = d;
+      }
+
+      const KEY_MAP = {
+        ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+        KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right'
+      };
+
+      document.addEventListener('keydown', e => {
+        if (KEY_MAP[e.code]) {
+          e.preventDefault();
+          if (!running) start();
+          setDir(KEY_MAP[e.code]);
+        } else if (e.code === 'Space') {
+          e.preventDefault();
+          if (running && timer) {
+            paused = !paused;
+            if (paused) {
+              ovTitle.textContent = '已暂停';
+              ovScore.classList.add('hidden');
+              ovSub.textContent = '按空格或点击按钮继续';
+              startBtn.textContent = '继续';
+              overlay.classList.remove('hidden');
+            } else {
+              overlay.classList.add('hidden');
+            }
+          }
+        }
+      });
+
+      // 暂停时点击按钮继续而不是重开
+      startBtn.addEventListener('click', () => {
+        startBtn.blur();
+        if (paused) {
+          paused = false;
+          overlay.classList.add('hidden');
+        } else {
+          start();
+        }
+      });
+
+      // 虚拟方向键
+      document.querySelectorAll('.dpad button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (!running) start();
+          setDir(btn.dataset.dir);
+        });
+      });
+
+      // 触摸滑动
+      let touchStart = null;
+      canvas.addEventListener('touchstart', e => {
+        touchStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }, { passive: true });
+      canvas.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+      canvas.addEventListener('touchend', e => {
+        if (!touchStart) return;
+        const dx = e.changedTouches[0].clientX - touchStart.x;
+        const dy = e.changedTouches[0].clientY - touchStart.y;
+        touchStart = null;
+        if (Math.abs(dx) < 20 && Math.abs(dy) < 20) return;
+        if (!running) start();
+        if (Math.abs(dx) > Math.abs(dy)) setDir(dx > 0 ? 'right' : 'left');
+        else setDir(dy > 0 ? 'down' : 'up');
+      });
+
+      reset();
+    })();
+  </script>
+<!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7f217925546646b2ac70e0e1ef877263"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+
+</html>

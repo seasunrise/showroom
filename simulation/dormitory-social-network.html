@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>宿舍楼社交网络 · Dormitory Social Network</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0f1c; font-family: "PingFang SC", "Helvetica Neue", Arial, sans-serif; }
+  canvas { display: block; cursor: grab; }
+  canvas.dragging { cursor: grabbing; }
+
+  .card {
+    background: rgba(13, 19, 36, 0.85); backdrop-filter: blur(12px);
+    border: 1px solid rgba(130, 160, 255, 0.16); border-radius: 14px;
+    color: #ccd6ee;
+  }
+  #panel { position: fixed; top: 20px; left: 20px; width: 250px; padding: 18px 20px; z-index: 5; }
+  #panel h1 { font-size: 15px; font-weight: 600; color: #e9efff; letter-spacing: 1px; }
+  #panel .sub { font-size: 11px; color: #7585ab; margin: 4px 0 14px; line-height: 1.6; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .stat { background: rgba(120,150,255,.07); border-radius: 9px; padding: 8px 10px; }
+  .stat .num { font-size: 18px; font-weight: 700; color: #8fc3ff; font-variant-numeric: tabular-nums; }
+  .stat .lbl { font-size: 10px; color: #6d7da3; margin-top: 2px; }
+
+  .opt { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 7px 0; border-top: 1px solid rgba(130,160,255,.08); }
+  .switch { width: 34px; height: 18px; border-radius: 9px; background: rgba(130,160,255,.18); position: relative; cursor: pointer; transition: background .2s; flex-shrink: 0; }
+  .switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #8aa3cf; transition: all .2s; }
+  .switch.on { background: rgba(126,200,255,.5); }
+  .switch.on::after { left: 18px; background: #e8f4ff; }
+
+  .row { display: flex; gap: 8px; margin-top: 12px; }
+  button { flex: 1; padding: 7px 0; font-size: 12px; color: #cfe2ff; cursor: pointer;
+    background: rgba(126,200,255,.1); border: 1px solid rgba(126,200,255,.3); border-radius: 8px; transition: background .2s; }
+  button:hover { background: rgba(126,200,255,.25); }
+
+  #legend { position: fixed; top: 20px; right: 20px; width: 132px; padding: 12px 14px; z-index: 5; }
+  #legend h2 { font-size: 12px; color: #9db0d6; font-weight: 600; margin-bottom: 8px; letter-spacing: 1px; }
+  .dorm-item { display: flex; align-items: center; gap: 8px; font-size: 11px; padding: 4px 6px; border-radius: 6px; cursor: pointer; color: #aabbdd; transition: background .15s; }
+  .dorm-item:hover { background: rgba(130,160,255,.12); }
+  .dorm-item.active { background: rgba(130,160,255,.22); color: #fff; }
+  .dorm-item .dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .dorm-item .cnt { margin-left: auto; font-size: 10px; color: #63739a; }
+
+  #tooltip {
+    position: fixed; z-index: 20; pointer-events: none; opacity: 0; transition: opacity .12s;
+    padding: 10px 13px; font-size: 12px; line-height: 1.7; max-width: 230px;
+    background: rgba(16, 24, 46, 0.95); border: 1px solid rgba(140,170,255,.3); border-radius: 10px; color: #dbe6ff;
+    box-shadow: 0 6px 24px rgba(0,0,0,.5);
+  }
+  #tooltip .t-name { font-size: 13px; font-weight: 700; }
+  #tooltip .t-dim { color: #7f90b8; font-size: 11px; }
+  #tooltip .t-bar { height: 3px; border-radius: 2px; background: rgba(255,255,255,.1); margin-top: 5px; overflow: hidden; }
+  #tooltip .t-bar i { display: block; height: 100%; border-radius: 2px; }
+
+  #hint { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+    font-size: 11px; color: rgba(150,170,215,.5); letter-spacing: 1px; pointer-events: none; }
+</style>
+</head>
+<body>
+
+<div id="panel" class="card">
+  <h1>宿舍楼社交网络</h1>
+  <div class="sub">40 名学生 · 10 个宿舍 · 4 人一间<br>粗边 = 互动频繁，颜色 = 所属宿舍</div>
+  <div class="stat-grid">
+    <div class="stat"><div class="num" id="s-nodes">40</div><div class="lbl">学生</div></div>
+    <div class="stat"><div class="num" id="s-edges">0</div><div class="lbl">互动关系</div></div>
+    <div class="stat"><div class="num" id="s-in">0</div><div class="lbl">宿舍内互动</div></div>
+    <div class="stat"><div class="num" id="s-out">0</div><div class="lbl">跨宿舍互动</div></div>
+  </div>
+  <div class="opt"><span>显示姓名</span><div class="switch on" id="sw-label"></div></div>
+  <div class="opt"><span>显示跨宿舍关系</span><div class="switch on" id="sw-cross"></div></div>
+  <div class="opt"><span>互动强度 → 连线粗细</span><div class="switch on" id="sw-weight"></div></div>
+  <div class="row">
+    <button id="btn-regen">随机重生成</button>
+    <button id="btn-pause">暂停布局</button>
+  </div>
+</div>
+
+<div id="legend" class="card"><h2>宿舍图例</h2><div id="legend-list"></div></div>
+<div id="tooltip"></div>
+<div id="hint">悬停查看学生详情 · 拖动节点 · 点击图例聚焦某个宿舍</div>
+<canvas id="c"></canvas>
+
+<script>
+const canvas = document.getElementById('c'), ctx = canvas.getContext('2d');
+let W, H;
+function resize() { W = canvas.width = innerWidth; H = canvas.height = innerHeight; }
+addEventListener('resize', resize); resize();
+
+// ---------- 配色：10 个宿舍 ----------
+const DORM_COLORS = ['#ff6b81','#ffa94d','#ffd43b','#8ce99a','#3bc9db','#4dabf7','#9775fa','#f783ac','#a9e34b','#63e6be'];
+
+// ---------- 随机中文名 ----------
+const SURNAMES = '林陈王李张刘杨黄周吴徐孙马朱胡郭何高罗郑梁谢宋唐许韩冯邓曹彭'.split('');
+const GIVEN = '伟芳娜敏静丽强磊军洋勇艳杰娟涛明超霞平刚桂英华玉兰梅浩宇欣怡子轩雨桐诗涵一诺思远天进步青云'.match(/[\u4e00-\u9fa5]/g);
+function randName() { return SURNAMES[Math.random()*SURNAMES.length|0] + GIVEN[Math.random()*GIVEN.length|0]; }
+
+// ---------- 数据生成 ----------
+const N_DORMS = 10, PER_DORM = 4, N = N_DORMS * PER_DORM;
+let nodes = [], edges = [];
+
+function generate() {
+  nodes = []; edges = [];
+  // 宿舍锚点：围成一圈
+  const R = Math.min(W, H) * 0.32;
+  const anchors = [];
+  for (let d = 0; d < N_DORMS; d++) {
+    const a = d / N_DORMS * Math.PI * 2 - Math.PI / 2;
+    anchors.push({ x: W/2 + Math.cos(a) * R, y: H/2 + Math.sin(a) * R });
+  }
+  for (let d = 0; d < N_DORMS; d++) {
+    for (let k = 0; k < PER_DORM; k++) {
+      nodes.push({
+        id: d * PER_DORM + k, dorm: d, name: randName(),
+        x: anchors[d].x + (Math.random()-.5) * 90,
+        y: anchors[d].y + (Math.random()-.5) * 90,
+        vx: 0, vy: 0, r: 10 + Math.random() * 4,
+        anchor: anchors[d], linkCount: 0, strength: 0
+      });
+    }
+  }
+  const edgeSet = new Set();
+  function addEdge(a, b, w) {
+    if (a === b) return;
+    const key = Math.min(a,b) + '-' + Math.max(a,b);
+    if (edgeSet.has(key)) return;
+    edgeSet.add(key);
+    edges.push({ a, b, w, cross: nodes[a].dorm !== nodes[b].dorm });
+    nodes[a].linkCount++; nodes[b].linkCount++;
+    nodes[a].strength += w; nodes[b].strength += w;
+  }
+  // 宿舍内：室友关系，大概率强互动 (权重 3~5)
+  for (let d = 0; d < N_DORMS; d++) {
+    const m = [0,1,2,3].map(k => d * PER_DORM + k);
+    for (let i = 0; i < 4; i++) for (let j = i+1; j < 4; j++) {
+      if (Math.random() < 0.92) addEdge(m[i], m[j], 3 + Math.random() * 2 | 0);
+    }
+  }
+  // 跨宿舍：每名学生 0~2 个外寝朋友 (权重 1~2)
+  for (let i = 0; i < N; i++) {
+    const nFriends = Math.random() < 0.25 ? 0 : (Math.random() < 0.6 ? 1 : 2);
+    for (let f = 0; f < nFriends; f++) {
+      let j = Math.random() * N | 0, guard = 0;
+      while ((nodes[j].dorm === nodes[i].dorm || j === i) && guard++ < 20) j = Math.random() * N | 0;
+      if (nodes[j].dorm !== nodes[i].dorm) addEdge(i, j, 1 + (Math.random() < 0.4 ? 1 : 0));
+    }
+  }
+  updateStats(); buildLegend();
+  hoverNode = null; focusDorm = null;
+}
+
+function updateStats() {
+  document.getElementById('s-edges').textContent = edges.length;
+  document.getElementById('s-in').textContent = edges.filter(e => !e.cross).length;
+  document.getElementById('s-out').textContent = edges.filter(e => e.cross).length;
+}
+
+// ---------- 图例 ----------
+function buildLegend() {
+  const list = document.getElementById('legend-list');
+  list.innerHTML = '';
+  for (let d = 0; d < N_DORMS; d++) {
+    const cnt = edges.filter(e => nodes[e.a].dorm === d && nodes[e.b].dorm === d).length;
+    const item = document.createElement('div');
+    item.className = 'dorm-item';
+    item.innerHTML = `<span class="dot" style="background:${DORM_COLORS[d]}"></span>宿舍 ${d+1}<span class="cnt">${cnt} 边</span>`;
+    item.onclick = () => {
+      focusDorm = (focusDorm === d) ? null : d;
+      document.querySelectorAll('.dorm-item').forEach((el, i) => el.classList.toggle('active', i === focusDorm));
+    };
+    list.appendChild(item);
+  }
+}
+
+// ---------- 力导向布局 ----------
+const opt = { label: true, cross: true, weight: true, paused: false };
+let focusDorm = null, hoverNode = null, dragNode = null;
+
+function tick() {
+  // 斥力 (O(n²), n=40 足够快)
+  for (let i = 0; i < N; i++) {
+    const a = nodes[i];
+    for (let j = i+1; j < N; j++) {
+      const b = nodes[j];
+      let dx = a.x - b.x, dy = a.y - b.y;
+      let d2 = dx*dx + dy*dy; if (d2 < 1) d2 = 1;
+      const d = Math.sqrt(d2);
+      const f = Math.min(1400 / d2, 2.5);   // 斥力上限，防止重叠时爆炸
+      dx /= d; dy /= d;
+      a.vx += dx * f; a.vy += dy * f;
+      b.vx -= dx * f; b.vy -= dy * f;
+    }
+  }
+  // 弹簧力：权重越大目标距离越短、拉力越强（线性弹簧，力与位移成正比）
+  for (const e of edges) {
+    const a = nodes[e.a], b = nodes[e.b];
+    const rest = e.cross ? 150 : 95 - e.w * 8;
+    let dx = b.x - a.x, dy = b.y - a.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const k = e.cross ? 0.003 : 0.008 + e.w * 0.0015;
+    const f = (d - rest) * k;
+    dx /= d; dy /= d;
+    a.vx += dx * f; a.vy += dy * f;
+    b.vx -= dx * f; b.vy -= dy * f;
+  }
+  // 宿舍锚点引力 + 全局居中
+  for (const n of nodes) {
+    n.vx += (n.anchor.x - n.x) * 0.004;
+    n.vy += (n.anchor.y - n.y) * 0.004;
+    n.vx += (W/2 - n.x) * 0.0012;
+    n.vy += (H/2 - n.y) * 0.0012;
+    // 阻尼、限速与位移
+    n.vx *= 0.86; n.vy *= 0.86;
+    const sp = Math.hypot(n.vx, n.vy);
+    if (sp > 6) { n.vx = n.vx / sp * 6; n.vy = n.vy / sp * 6; }
+    if (n !== dragNode) { n.x += n.vx; n.y += n.vy; }
+    // 数值保险：坐标异常时重置回宿舍锚点
+    if (!isFinite(n.x) || !isFinite(n.y)) { n.x = n.anchor.x; n.y = n.anchor.y; n.vx = n.vy = 0; }
+  }
+}
+
+// ---------- 渲染 ----------
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // 宿舍光圈背景（示意宿舍领地）
+  for (let d = 0; d < N_DORMS; d++) {
+    const members = nodes.filter(n => n.dorm === d);
+    const cx = members.reduce((s,n) => s+n.x, 0) / members.length;
+    const cy = members.reduce((s,n) => s+n.y, 0) / members.length;
+    let r = 0;
+    for (const n of members) r = Math.max(r, Math.hypot(n.x-cx, n.y-cy));
+    r += 46;
+    const g = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
+    const col = DORM_COLORS[d];
+    g.addColorStop(0, col + (focusDorm === null || focusDorm === d ? '14' : '06'));
+    g.addColorStop(1, col + '00');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = col + (focusDorm === d ? '88' : '2e');
+    ctx.setLineDash([5, 6]); ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = col + 'aa';
+    ctx.font = '600 12px "PingFang SC", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('宿舍 ' + (d+1), cx, cy - r + 16);
+  }
+
+  // 边
+  const hl = hoverNode ? neighborSet(hoverNode) : null;
+  for (const e of edges) {
+    if (e.cross && !opt.cross) continue;
+    const a = nodes[e.a], b = nodes[e.b];
+    let alpha, color, width;
+    if (e.cross) { color = '150,170,215'; alpha = 0.18; width = 1; }
+    else {
+      const c = DORM_COLORS[a.dorm];
+      const rgb = hexToRgb(c);
+      color = rgb; alpha = 0.25 + e.w * 0.09; width = opt.weight ? 0.8 + e.w * 0.8 : 1.5;
+    }
+    // 聚焦/悬停时的明暗处理
+    if (focusDorm !== null && (a.dorm !== focusDorm && b.dorm !== focusDorm)) alpha *= 0.15;
+    if (hl) alpha = (hl.has(e.a) && hl.has(e.b)) ? Math.min(1, alpha + 0.45) : alpha * 0.12;
+    ctx.strokeStyle = `rgba(${color},${alpha.toFixed(3)})`;
+    ctx.lineWidth = width;
+    if (e.cross) ctx.setLineDash([3, 5]); else ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+
+  // 节点
+  for (const n of nodes) {
+    let dim = 1;
+    if (focusDorm !== null && n.dorm !== focusDorm) dim = 0.25;
+    if (hl && !hl.has(n.id)) dim = 0.2;
+    const col = DORM_COLORS[n.dorm];
+    ctx.globalAlpha = dim;
+    // 光晕
+    const g = ctx.createRadialGradient(n.x, n.y, 1, n.x, n.y, n.r * 2.2);
+    g.addColorStop(0, col + '55'); g.addColorStop(1, col + '00');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 2.2, 0, Math.PI*2); ctx.fill();
+    // 本体
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,' + (0.5 * dim) + ')';
+    ctx.lineWidth = n === hoverNode ? 2.5 : 1.2;
+    ctx.stroke();
+    // 姓名
+    if (opt.label) {
+      ctx.fillStyle = `rgba(230,238,255,${0.92 * dim})`;
+      ctx.font = (n === hoverNode ? '700 12px' : '11px') + ' "PingFang SC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(n.name, n.x, n.y - n.r - 6);
+    }
+    ctx.globalAlpha = 1;
+  }
+}
+
+function hexToRgb(h) {
+  return [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)].join(',');
+}
+function neighborSet(n) {
+  const s = new Set([n.id]);
+  for (const e of edges) {
+    if (e.a === n.id) s.add(e.b);
+    if (e.b === n.id) s.add(e.a);
+  }
+  return s;
+}
+
+// ---------- 交互 ----------
+const tooltip = document.getElementById('tooltip');
+function nodeAt(mx, my) {
+  for (let i = nodes.length - 1; i >= 0; i--) {
+    const n = nodes[i];
+    if (Math.hypot(n.x-mx, n.y-my) < n.r + 6) return n;
+  }
+  return null;
+}
+canvas.addEventListener('mousemove', e => {
+  const mx = e.clientX, my = e.clientY;
+  if (dragNode) {
+    dragNode.x = mx; dragNode.y = my; dragNode.vx = dragNode.vy = 0;
+    return;
+  }
+  hoverNode = nodeAt(mx, my);
+  canvas.style.cursor = hoverNode ? 'pointer' : 'grab';
+  if (hoverNode) {
+    const n = hoverNode;
+    const inDorm = edges.filter(x => !x.cross && (x.a===n.id || x.b===n.id)).length;
+    const outDorm = edges.filter(x => x.cross && (x.a===n.id || x.b===n.id)).length;
+    tooltip.innerHTML = `
+      <span class="t-name" style="color:${DORM_COLORS[n.dorm]}">${n.name}</span>
+      <span class="t-dim">宿舍 ${n.dorm+1} · 床位 ${n.id % 4 + 1}</span><br>
+      宿舍内互动 <b>${inDorm}</b> 条 · 跨宿舍 <b>${outDorm}</b> 条<br>
+      社交活跃度 ${n.strength.toFixed(0)}
+      <div class="t-bar"><i style="width:${Math.min(100, n.strength * 4)}%;background:${DORM_COLORS[n.dorm]}"></i></div>`;
+    tooltip.style.opacity = 1;
+    tooltip.style.left = Math.min(W - 250, mx + 16) + 'px';
+    tooltip.style.top = Math.min(H - 130, my + 14) + 'px';
+  } else {
+    tooltip.style.opacity = 0;
+  }
+});
+canvas.addEventListener('mousedown', e => {
+  const n = nodeAt(e.clientX, e.clientY);
+  if (n) { dragNode = n; canvas.classList.add('dragging'); }
+});
+addEventListener('mouseup', () => { dragNode = null; canvas.classList.remove('dragging'); });
+canvas.addEventListener('mouseleave', () => { hoverNode = null; tooltip.style.opacity = 0; });
+
+// ---------- 控件 ----------
+function bindSwitch(id, key) {
+  const el = document.getElementById(id);
+  el.onclick = () => { el.classList.toggle('on'); opt[key] = el.classList.contains('on'); };
+}
+bindSwitch('sw-label', 'label');
+bindSwitch('sw-cross', 'cross');
+bindSwitch('sw-weight', 'weight');
+document.getElementById('btn-regen').onclick = generate;
+document.getElementById('btn-pause').onclick = e => {
+  opt.paused = !opt.paused;
+  e.target.textContent = opt.paused ? '继续布局' : '暂停布局';
+};
+
+// ---------- 主循环 ----------
+function loop() {
+  requestAnimationFrame(loop);
+  if (!opt.paused) tick();
+  draw();
+}
+generate();
+loop();
+</script>
+<!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7f217925546646b2ac70e0e1ef877263"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>

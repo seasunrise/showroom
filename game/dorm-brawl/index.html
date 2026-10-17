@@ -1,0 +1,1490 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>宿舍大乱斗 · Dorm Brawl</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #0f1220;
+      --bg2: #1a1e35;
+      --ink: #e5e7eb;
+      --muted: #8b92a8;
+      --accent: #4f6df5;
+      --accent2: #22b8a6;
+      --red: #ef4444;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --font: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      --mono: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+    }
+
+    html,
+    body {
+      height: 100%;
+      height: 100dvh;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--ink);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      overflow: hidden;
+    }
+
+    /* 游戏中允许页面滚动（矮屏/横屏手机内容超高时可滚动），safe center 防止顶部被裁 */
+    body.in-game {
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+      align-items: flex-start;
+      align-items: safe center;
+    }
+
+    input,
+    textarea {
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    /* ===== 加入界面 ===== */
+    #joinScreen {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(600px 300px at 30% 20%, rgba(79, 109, 245, .15), transparent),
+        radial-gradient(500px 300px at 70% 80%, rgba(34, 184, 166, .12), transparent),
+        var(--bg);
+    }
+
+    .join-card {
+      background: rgba(26, 30, 53, .85);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(79, 109, 245, .25);
+      border-radius: 20px;
+      padding: 2.5rem 2.8rem;
+      width: min(360px, 92vw);
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, .4);
+    }
+
+    .join-card h1 {
+      font-size: clamp(1.5rem, 6vw, 2rem);
+      font-weight: 800;
+      letter-spacing: 2px;
+      background: linear-gradient(120deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: .2rem;
+    }
+
+    .join-card .subtitle {
+      font-family: var(--mono);
+      font-size: .75rem;
+      color: var(--muted);
+      letter-spacing: 3px;
+      margin-bottom: 1.6rem;
+    }
+
+    .join-card input {
+      width: 100%;
+      padding: .7rem 1rem;
+      margin-bottom: .7rem;
+      background: rgba(15, 18, 32, .8);
+      border: 1px solid rgba(79, 109, 245, .2);
+      border-radius: 10px;
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: .95rem;
+      transition: border .15s;
+    }
+
+    .join-card input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .join-card input::placeholder {
+      color: var(--muted);
+    }
+
+    .join-card button {
+      width: 100%;
+      padding: .75rem;
+      margin-top: .3rem;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: var(--font);
+      font-size: 1rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 6px 20px rgba(79, 109, 245, .3);
+      transition: transform .12s, box-shadow .12s;
+    }
+
+    .join-card button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 26px rgba(79, 109, 245, .4);
+    }
+
+    .join-card button:active {
+      transform: translateY(0);
+    }
+
+    .join-card button.ghost {
+      background: transparent;
+      border: 1px solid rgba(79, 109, 245, .35);
+      color: var(--ink);
+      font-weight: 600;
+      box-shadow: none;
+    }
+
+    .join-card button.ghost:hover {
+      background: rgba(79, 109, 245, .12);
+      border-color: var(--accent);
+      transform: none;
+      box-shadow: none;
+    }
+
+    #joinError {
+      color: var(--red);
+      font-size: .82rem;
+      min-height: 1.2rem;
+      margin-top: .5rem;
+    }
+
+    .join-card .hint {
+      margin-top: 1.4rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, .06);
+      font-size: .78rem;
+      color: var(--muted);
+      line-height: 1.9;
+    }
+
+    .join-card .hint p {
+      font-family: var(--mono);
+    }
+
+    /* ===== 游戏界面 ===== */
+    #gameScreen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: .5rem;
+      padding: .5rem;
+      width: 100%;
+      max-width: 100vw;
+      margin: 0 auto;
+    }
+
+    .game-wrap {
+      position: relative;
+    }
+
+    /* 顶栏 */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-bottom: .35rem;
+      width: 800px;
+      max-width: 100%;
+    }
+
+    .hud-left,
+    .hud-right {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .hud-center {
+      flex: 0 0 auto;
+    }
+
+    /* 我方血量 */
+    .my-panel {
+      background: rgba(26, 30, 53, .8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(79, 109, 245, .15);
+      border-radius: 12px;
+      padding: .45rem .7rem;
+      display: inline-block;
+    }
+
+    .my-panel .name-row {
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      margin-bottom: .3rem;
+    }
+
+    .my-panel .dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex: none;
+    }
+
+    .my-panel .pname {
+      font-weight: 700;
+      font-size: .85rem;
+    }
+
+    .hp-bar-wrap {
+      width: 200px;
+      height: 14px;
+      background: rgba(0, 0, 0, .4);
+      border-radius: 7px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .hp-bar {
+      height: 100%;
+      border-radius: 7px;
+      transition: width .2s, background .2s;
+    }
+
+    .hp-text {
+      font-family: var(--mono);
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: .15rem;
+    }
+
+    .buffs {
+      display: flex;
+      gap: .25rem;
+      margin-top: .35rem;
+    }
+
+    .buff {
+      font-size: .68rem;
+      padding: .1rem .35rem;
+      border-radius: 5px;
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    .buff.speed {
+      background: rgba(245, 158, 11, .15);
+      color: var(--yellow);
+    }
+
+    .buff.shield {
+      background: rgba(79, 109, 245, .15);
+      color: var(--accent);
+    }
+
+    .buff.rapid {
+      background: rgba(239, 68, 68, .15);
+      color: var(--red);
+    }
+
+    /* 观战标识 */
+    .spec-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      background: rgba(26, 30, 53, .8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(34, 184, 166, .3);
+      border-radius: 12px;
+      padding: .55rem .9rem;
+      font-size: .85rem;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    /* 回合信息 */
+    .round-badge {
+      background: rgba(26, 30, 53, .8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(34, 184, 166, .2);
+      border-radius: 999px;
+      padding: .35rem 1.1rem;
+      text-align: center;
+    }
+
+    .round-badge .num {
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    .round-badge .alive {
+      font-family: var(--mono);
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    /* 计分板 */
+    .scoreboard {
+      background: rgba(26, 30, 53, .8);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(79, 109, 245, .15);
+      border-radius: 12px;
+      padding: .4rem .6rem;
+      font-size: .78rem;
+      min-width: 120px;
+      max-width: 100%;
+    }
+
+    .scoreboard .row {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      padding: .12rem 0;
+    }
+
+    .scoreboard .row .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex: none;
+    }
+
+    .scoreboard .row .sname {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .scoreboard .row .score {
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--accent2);
+    }
+
+    .scoreboard .row.dead {
+      opacity: .4;
+    }
+
+    .scoreboard .row.me .sname {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Canvas */
+    .canvas-wrap {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, .4);
+      max-width: 100%;
+    }
+
+    canvas {
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    /* 底栏 */
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      gap: 1rem;
+      width: 800px;
+      max-width: 100%;
+      margin-top: .35rem;
+    }
+
+    /* 击杀提示 */
+    .kill-feed {
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+      min-width: 0;
+    }
+
+    .kill-msg {
+      background: rgba(26, 30, 53, .8);
+      backdrop-filter: blur(6px);
+      border-radius: 8px;
+      padding: .2rem .6rem;
+      font-size: .76rem;
+      animation: fadeIn .2s;
+    }
+
+    .kill-msg .killer {
+      font-weight: 700;
+    }
+
+    .kill-msg .arrow {
+      color: var(--muted);
+      margin: 0 .25rem;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateX(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    /* 聊天 */
+    .chat-box {
+      flex: 1 1 200px;
+      width: auto;
+      min-width: 0;
+      max-width: 280px;
+    }
+
+    .chat-log {
+      height: 60px;
+      overflow-y: auto;
+      margin-bottom: .25rem;
+      font-size: .74rem;
+      color: var(--muted);
+    }
+
+    .chat-log .line {
+      padding: .1rem 0;
+    }
+
+    .chat-log .line .cn {
+      font-weight: 700;
+    }
+
+    .chat-input {
+      width: 100%;
+      padding: .35rem .55rem;
+      font-size: .78rem;
+      background: rgba(26, 30, 53, .8);
+      border: 1px solid rgba(79, 109, 245, .2);
+      border-radius: 8px;
+      color: var(--ink);
+      font-family: var(--font);
+    }
+
+    .chat-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    /* 覆盖层 */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 12, 24, .72);
+      backdrop-filter: blur(6px);
+      z-index: 10;
+      flex-direction: column;
+      gap: .6rem;
+      text-align: center;
+    }
+
+    .overlay.hidden {
+      display: none;
+    }
+
+    .overlay h2 {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .overlay p {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* 信息提示 */
+    #toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(26, 30, 53, .9);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(79, 109, 245, .25);
+      border-radius: 10px;
+      padding: .5rem 1.2rem;
+      font-size: .85rem;
+      z-index: 50;
+      opacity: 0;
+      transition: opacity .3s;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+    }
+
+    /* ===== 触屏控件（仅粗指针设备显示，见 JS 中 body.touch） ===== */
+    #touchUI {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    body.touch #touchUI {
+      display: block;
+    }
+
+    #joyBase {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      width: 116px;
+      height: 116px;
+      border-radius: 50%;
+      background: rgba(26, 30, 53, .45);
+      border: 1px solid rgba(79, 109, 245, .4);
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    #joyKnob {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 56px;
+      height: 56px;
+      margin: -28px 0 0 -28px;
+      border-radius: 50%;
+      background: rgba(79, 109, 245, .55);
+      border: 1px solid rgba(255, 255, 255, .35);
+      pointer-events: none;
+    }
+
+    #fireBtn {
+      position: absolute;
+      right: 16px;
+      bottom: 24px;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, .3);
+      border: 2px solid rgba(239, 68, 68, .65);
+      color: #fff;
+      font-size: .95rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+      touch-action: none;
+    }
+
+    #fireBtn.active {
+      background: rgba(239, 68, 68, .55);
+    }
+
+    /* ===== 响应式：窄屏适配 ===== */
+    @media (max-width: 640px) {
+      #gameScreen {
+        padding: .35rem;
+        gap: .35rem;
+      }
+
+      .top-bar,
+      .bottom-bar {
+        gap: .5rem;
+      }
+
+      .hp-bar-wrap {
+        width: 150px;
+      }
+
+      .my-panel {
+        padding: .35rem .55rem;
+      }
+
+      .scoreboard {
+        padding: .3rem .5rem;
+        font-size: .72rem;
+        min-width: 110px;
+      }
+
+      .round-badge {
+        padding: .3rem .8rem;
+        font-size: .82rem;
+      }
+
+      .chat-log {
+        height: 44px;
+      }
+
+      .chat-input {
+        font-size: 16px;
+        /* ≥16px 防止 iOS 聚焦时自动放大页面 */
+      }
+    }
+
+    @media (max-width: 480px) {
+      .join-card {
+        padding: 1.6rem 1.4rem;
+        border-radius: 16px;
+      }
+
+      .join-card input {
+        font-size: 16px;
+        /* ≥16px 防止 iOS 聚焦时自动放大页面 */
+      }
+
+      .join-card .hint {
+        margin-top: 1rem;
+        font-size: .72rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- 加入界面 -->
+  <div id="joinScreen">
+    <div class="join-card">
+      <h1>宿舍大乱斗</h1>
+      <p class="subtitle">DORM BRAWL</p>
+      <input id="nameInput" placeholder="输入昵称" maxlength="12" autocomplete="off">
+      <input id="ipInput" placeholder="服务器地址（留空 = 跟随当前网页）" autocomplete="off">
+      <button id="joinBtn">加入战斗</button>
+      <button id="spectateBtn" class="ghost">👁 观战</button>
+      <div id="joinError"></div>
+      <div class="hint">
+        <p>WASD 移动 · 鼠标瞄准 · 点击发射</p>
+        <p>捡道具获增益 · 最后存活者获胜</p>
+        <p>地址留空 = 通过当前网页连接（支持 Nginx 反代 / HTTPS）</p>
+        <p>或填 IP:端口 直连（局域网对战）</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 游戏界面 -->
+  <div id="gameScreen">
+    <div class="top-bar">
+      <div class="hud-left">
+        <div class="my-panel" id="myPanel">
+          <div class="name-row">
+            <span class="dot" id="myDot"></span>
+            <span class="pname" id="myName">—</span>
+          </div>
+          <div class="hp-bar-wrap">
+            <div class="hp-bar" id="myHpBar" style="width:100%"></div>
+          </div>
+          <div class="hp-text" id="myHpText">100 / 100</div>
+          <div class="buffs" id="myBuffs"></div>
+        </div>
+        <div class="spec-badge" id="specBadge" style="display:none">👁 观战中</div>
+      </div>
+      <div class="hud-center">
+        <div class="round-badge">
+          <span class="num" id="roundNum">—</span>
+          <span class="alive" id="aliveCount">—</span>
+        </div>
+      </div>
+      <div class="hud-right">
+        <div class="scoreboard" id="scoreboard"></div>
+      </div>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="canvas" width="800" height="600"></canvas>
+      <!-- 触屏虚拟控件：仅粗指针设备显示（body.touch） -->
+      <div id="touchUI">
+        <div id="joyBase">
+          <div id="joyKnob"></div>
+        </div>
+        <div id="fireBtn">开火</div>
+      </div>
+      <div class="overlay hidden" id="deathOverlay">
+        <h2 style="color:var(--red)">你被淘汰了！</h2>
+        <p id="deathSub">等待新回合开始...</p>
+      </div>
+      <div class="overlay hidden" id="winOverlay">
+        <h2 id="winText">— 获胜！</h2>
+        <p>新回合即将开始...</p>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <div class="chat-box">
+        <div class="chat-log" id="chatLog"></div>
+        <input class="chat-input" id="chatInput" placeholder="按 Enter 聊天" maxlength="80" autocomplete="off">
+      </div>
+      <div class="kill-feed" id="killFeed"></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      // ===== 元素引用 =====
+      var $ = function (id) { return document.getElementById(id); };
+      var joinScreen = $('joinScreen');
+      var gameScreen = $('gameScreen');
+      var nameInput = $('nameInput');
+      var ipInput = $('ipInput');
+      var joinBtn = $('joinBtn');
+      var spectateBtn = $('spectateBtn');
+      var joinError = $('joinError');
+      var canvas = $('canvas');
+      var ctx = canvas.getContext('2d');
+      var deathOverlay = $('deathOverlay');
+      var winOverlay = $('winOverlay');
+      var chatInput = $('chatInput');
+      var toast = $('toast');
+
+      // ===== 状态 =====
+      var ws = null;
+      var myId = null;
+      var myName = '';
+      var myColor = '#fff';
+      var isSpectator = false;   // 观战模式：只看不打，不上场
+      var state = null;
+      var keys = {};
+      var mouse = { x: 400, y: 300, down: false };
+      var particles = [];
+      var prevHp = {};
+      var prevAlive = {};
+      var prevProjIds = [];
+      var chatFocused = false;
+      var lastFitKey = '';
+
+      // 触屏设备检测：仅粗指针设备显示虚拟摇杆 / 开火键
+      var isCoarse = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || ('ontouchstart' in window);
+      if (isCoarse) document.body.classList.add('touch');
+
+      // 昵称默认随机
+      nameInput.value = '玩家' + Math.floor(Math.random() * 100);
+
+      // 根据页面地址构造 WebSocket URL（支持反向代理 / HTTPS / 子路径部署）
+      function buildWsUrl(server) {
+        if (server) {
+          // 手动指定服务器：直连模式（未写端口时默认 8080）
+          var host = server.indexOf(':') >= 0 ? server : server + ':8080';
+          return 'ws://' + host + '/ws';
+        }
+        // 留空：跟随当前页面（HTTPS 页面自动使用 wss://，子路径部署自动带前缀）
+        var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+        var hostPart = location.host || 'localhost:8080';
+        var base = location.pathname.replace(/[^/]*$/, '');  // /a/b/index.html → /a/b/
+        return proto + hostPart + base + 'ws';
+      }
+
+      // 参战 / 观战 的界面差异
+      function applyRoleUI() {
+        $('myPanel').style.display = isSpectator ? 'none' : '';
+        $('specBadge').style.display = isSpectator ? 'inline-flex' : 'none';
+      }
+
+      function resetJoinBtn() {
+        joinBtn.disabled = false;
+        spectateBtn.disabled = false;
+        joinBtn.textContent = '加入战斗';
+      }
+
+      // ===== 加入逻辑（spectate=true 则以观战者身份进入）=====
+      function doJoin(spectate) {
+        isSpectator = !!spectate;
+        var name = nameInput.value.trim() || (isSpectator ? '观众' : '匿名玩家');
+        var server = ipInput.value.trim();
+        joinError.textContent = '';
+        joinBtn.disabled = true;
+        spectateBtn.disabled = true;
+        joinBtn.textContent = '连接中...';
+
+        var url;
+        try {
+          url = buildWsUrl(server);
+          // 观战身份写进连接地址，服务器在握手时就能区分，不会把观战者当成场上玩家
+          if (isSpectator) url += (url.indexOf('?') >= 0 ? '&' : '?') + 'spectate=1';
+          ws = new WebSocket(url);
+        } catch (e) {
+          joinError.textContent = '地址无效: ' + e.message;
+          resetJoinBtn();
+          return;
+        }
+
+        var timeout = setTimeout(function () {
+          if (ws.readyState !== 1) {
+            joinError.textContent = '连接超时: ' + url;
+            resetJoinBtn();
+            try { ws.close(); } catch (e) { }
+          }
+        }, 4000);
+
+        ws.onopen = function () {
+          clearTimeout(timeout);
+          ws.send(JSON.stringify({ t: 'join', name: name }));
+          // 切换到游戏界面
+          joinScreen.style.display = 'none';
+          gameScreen.style.display = 'flex';
+          document.body.classList.add('in-game');
+          applyRoleUI();
+          queueFitCanvas();
+          startLoops();
+        };
+
+        ws.onmessage = function (e) {
+          var data = JSON.parse(e.data);
+          handleMessage(data);
+        };
+
+        ws.onclose = function () {
+          clearTimeout(timeout);
+          if (gameScreen.style.display !== 'none') {
+            // 游戏中断开
+            showToast('与服务器的连接已断开');
+            setTimeout(function () { location.reload(); }, 2000);
+          } else {
+            joinError.textContent = '连接被拒绝: ' + url;
+            resetJoinBtn();
+          }
+        };
+
+        ws.onerror = function () {
+          clearTimeout(timeout);
+          joinError.textContent = '连接失败: ' + url;
+          resetJoinBtn();
+        };
+      }
+
+      joinBtn.addEventListener('click', function () { doJoin(false); });
+      spectateBtn.addEventListener('click', function () { doJoin(true); });
+      nameInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') ipInput.focus(); });
+      ipInput.addEventListener('keydown', function (e) { if (e.key === 'Enter') doJoin(false); });
+
+      // ===== 消息处理 =====
+      function handleMessage(data) {
+        switch (data.t) {
+          case 'joined':
+            myId = data.id;
+            myColor = data.color;
+            myName = data.name;
+            // 以服务器确认的身份为准：观战者不上场，只显示观战标识
+            isSpectator = !!data.spectate;
+            applyRoleUI();
+            if (!isSpectator) {
+              $('myDot').style.background = myColor;
+              $('myName').textContent = myName;
+            }
+            break;
+          case 'state':
+            onState(data);
+            break;
+          case 'info':
+            showToast(data.msg);
+            break;
+          case 'chat':
+            addChat(data.name, data.color, data.msg);
+            break;
+          case 'nameok':
+            myName = data.name;
+            $('myName').textContent = myName;
+            break;
+        }
+      }
+
+      function onState(s) {
+        // 检测命中和死亡 → 生成粒子
+        if (s.players) {
+          for (var i = 0; i < s.players.length; i++) {
+            var p = s.players[i];
+            var php = prevHp[p.id];
+            var palive = prevAlive[p.id];
+            if (php != null && p.hp < php && p.alive) {
+              spawnParticles(p.x, p.y, p.color, 8);
+            }
+            if (palive === true && !p.alive) {
+              spawnParticles(p.x, p.y, p.color, 16);
+            }
+            prevHp[p.id] = p.hp;
+            prevAlive[p.id] = p.alive;
+          }
+        }
+        state = s;
+        updateHUD();
+      }
+
+      // ===== 粒子系统 =====
+      function spawnParticles(x, y, color, count) {
+        for (var i = 0; i < count; i++) {
+          var a = (i / count) * Math.PI * 2 + Math.random() * 0.3;
+          var sp = 80 + Math.random() * 120;
+          particles.push({
+            x: x, y: y,
+            vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+            life: 0.4 + Math.random() * 0.3,
+            color: color, r: 2 + Math.random() * 3
+          });
+        }
+      }
+
+      function updateParticles(dt) {
+        for (var i = particles.length - 1; i >= 0; i--) {
+          var p = particles[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.vx *= 0.92;
+          p.vy *= 0.92;
+          p.life -= dt;
+          if (p.life <= 0) particles.splice(i, 1);
+        }
+      }
+
+      function drawParticles() {
+        for (var i = 0; i < particles.length; i++) {
+          var p = particles[i];
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.life * 2);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // ===== 渲染 =====
+      var lastFrame = performance.now();
+
+      function render() {
+        var now = performance.now();
+        var dt = Math.min((now - lastFrame) / 1000, 0.05);
+        lastFrame = now;
+
+        updateParticles(dt);
+
+        // 背景
+        ctx.fillStyle = '#161a2e';
+        ctx.fillRect(0, 0, 800, 600);
+
+        // 网格
+        ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+        ctx.lineWidth = 1;
+        for (var x = 0; x <= 800; x += 40) {
+          ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 600); ctx.stroke();
+        }
+        for (var y = 0; y <= 600; y += 40) {
+          ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(800, y); ctx.stroke();
+        }
+
+        // 边框
+        ctx.strokeStyle = 'rgba(79,109,245,0.25)';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(1.5, 1.5, 797, 597);
+
+        if (state) {
+          drawObstacles();
+          drawPowerups();
+          drawProjectiles();
+          drawParticles();
+          drawPlayers();
+        }
+
+        requestAnimationFrame(render);
+      }
+
+      function drawObstacles() {
+        // 顺序需与服务器 OBSTACLES 保持一致：4 张床 + 1 张桌 + 4 张椅子
+        var labels = ['床', '床', '床', '床', '桌', '椅', '椅', '椅', '椅'];
+        for (var i = 0; i < state.obstacles.length; i++) {
+          var o = state.obstacles[i];
+          ctx.fillStyle = '#3d3225';
+          ctx.fillRect(o[0], o[1], o[2], o[3]);
+          ctx.strokeStyle = '#5a4a35';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(o[0], o[1], o[2], o[3]);
+          // 标签
+          ctx.fillStyle = 'rgba(255,255,255,0.2)';
+          ctx.font = '12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(labels[i] || '障', o[0] + o[2] / 2, o[1] + o[3] / 2);
+        }
+      }
+
+      function drawPowerups() {
+        var icons = { speed: '速', shield: '盾', rapid: '连' };
+        var colors = { speed: '#f59e0b', shield: '#4f6df5', rapid: '#ef4444' };
+        for (var i = 0; i < state.powerups.length; i++) {
+          var pu = state.powerups[i];
+          var c = colors[pu.kind] || '#fff';
+          ctx.save();
+          ctx.shadowColor = c;
+          ctx.shadowBlur = 12;
+          ctx.fillStyle = c;
+          ctx.beginPath();
+          ctx.arc(pu.x, pu.y, 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 11px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(icons[pu.kind] || '?', pu.x, pu.y);
+        }
+      }
+
+      function drawProjectiles() {
+        for (var i = 0; i < state.projectiles.length; i++) {
+          var p = state.projectiles[i];
+          ctx.save();
+          ctx.shadowColor = p.color;
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          // 高光
+          ctx.fillStyle = 'rgba(255,255,255,0.4)';
+          ctx.beginPath();
+          ctx.arc(p.x - 2, p.y - 2, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      function drawPlayers() {
+        for (var i = 0; i < state.players.length; i++) {
+          var p = state.players[i];
+          var alpha = p.alive ? 1 : 0.25;
+
+          ctx.save();
+          ctx.globalAlpha = alpha;
+
+          // 道具光环
+          if (p.alive) {
+            if (p.shield > 0) {
+              ctx.strokeStyle = 'rgba(79,109,245,0.5)';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+            if (p.speed > 0) {
+              ctx.strokeStyle = 'rgba(245,158,11,0.4)';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([5, 4]);
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, 20, 0, Math.PI * 2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            if (p.rapid > 0) {
+              ctx.strokeStyle = 'rgba(239,68,68,0.4)';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, 19, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+          }
+
+          // 自己高亮
+          if (p.id === myId && p.alive) {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 19, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+
+          // 身体
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 16, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 眼睛（朝鼠标方向 / 默认右）
+          if (p.id === myId) {
+            var dx = mouse.x - p.x, dy = mouse.y - p.y;
+            var d = Math.hypot(dx, dy) || 1;
+            var ex = dx / d * 5, ey = dy / d * 5;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(p.x + ex - 3, p.y + ey - 2, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x + ex + 3, p.y + ey - 2, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(p.x + ex - 3, p.y + ey - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x + ex + 3, p.y + ey - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+          } else {
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(p.x - 4, p.y - 3, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x + 4, p.y - 3, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(p.x - 4, p.y - 3, 1.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x + 4, p.y - 3, 1.5, 0, Math.PI * 2); ctx.fill();
+          }
+
+          // 名字
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'bottom';
+          // 机器人：名字上方加一个 🤖 徽标
+          if (p.robot) {
+            ctx.font = '12px sans-serif';
+            ctx.fillText('🤖', p.x, p.y - 33);
+          }
+          ctx.font = 'bold 11px sans-serif';
+          ctx.fillText(p.name, p.x, p.y - 20);
+
+          // 血条
+          if (p.alive) {
+            var bw = 36, bh = 5;
+            var bx = p.x - bw / 2, by = p.y + 20;
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(bx, by, bw, bh);
+            var hpPct = Math.max(0, p.hp / 100);
+            var hpColor = hpPct > 0.5 ? '#22c55e' : (hpPct > 0.25 ? '#f59e0b' : '#ef4444');
+            ctx.fillStyle = hpColor;
+            ctx.fillRect(bx, by, bw * hpPct, bh);
+          }
+
+          ctx.restore();
+        }
+      }
+
+      // ===== HUD 更新 =====
+      function updateHUD() {
+        if (!state || !state.players) return;
+
+        // 我方血量
+        var me = null;
+        for (var i = 0; i < state.players.length; i++) {
+          if (state.players[i].id === myId) { me = state.players[i]; break; }
+        }
+        if (me) {
+          var hpPct = Math.max(0, me.hp / 100);
+          var bar = $('myHpBar');
+          bar.style.width = (hpPct * 100) + '%';
+          bar.style.background = hpPct > 0.5 ? 'var(--green)' : (hpPct > 0.25 ? 'var(--yellow)' : 'var(--red)');
+          $('myHpText').textContent = Math.max(0, me.hp) + ' / 100';
+
+          // Buffs
+          var buffs = $('myBuffs');
+          var html = '';
+          if (me.speed > 0) html += '<span class="buff speed">速 ' + me.speed.toFixed(1) + 's</span>';
+          if (me.shield > 0) html += '<span class="buff shield">盾 ' + me.shield.toFixed(1) + 's</span>';
+          if (me.rapid > 0) html += '<span class="buff rapid">连 ' + me.rapid.toFixed(1) + 's</span>';
+          buffs.innerHTML = html;
+
+          // 死亡覆盖层
+          if (!me.alive && state.roundActive) {
+            deathOverlay.classList.remove('hidden');
+            $('deathSub').textContent = '等待本回合结束，新回合自动复活';
+          } else {
+            deathOverlay.classList.add('hidden');
+          }
+        }
+
+        // 回合信息
+        $('roundNum').textContent = '第 ' + state.round + ' 回合';
+        $('aliveCount').textContent = ' · ' + state.alive + ' / ' + state.total + ' 存活';
+
+        // 胜利覆盖层
+        if (state.winner && !state.roundActive) {
+          winOverlay.classList.remove('hidden');
+          $('winText').textContent = state.winner + ' 获胜！';
+          $('winText').style.color = 'var(--accent2)';
+        } else {
+          winOverlay.classList.add('hidden');
+        }
+
+        // 计分板
+        var sorted = state.players.slice().sort(function (a, b) { return b.score - a.score; });
+        var sbHtml = '';
+        for (var j = 0; j < sorted.length; j++) {
+          var p = sorted[j];
+          sbHtml += '<div class="row' + (p.alive ? '' : ' dead') + (p.id === myId ? ' me' : '') + '">' +
+            '<span class="dot" style="background:' + p.color + '"></span>' +
+            '<span class="sname">' + escapeHtml(p.name) + '</span>' +
+            '<span class="score">' + p.score + '</span></div>';
+        }
+        $('scoreboard').innerHTML = sbHtml;
+
+        // 击杀提示
+        var kf = $('killFeed');
+        var kfHtml = '';
+        for (var k = 0; k < state.killfeed.length; k++) {
+          var kf_item = state.killfeed[k];
+          kfHtml += '<div class="kill-msg"><span class="killer" style="color:var(--accent2)">' +
+            escapeHtml(kf_item.killer) + '</span><span class="arrow">淘汰了</span><span style="color:var(--red)">' +
+            escapeHtml(kf_item.victim) + '</span></div>';
+        }
+        kf.innerHTML = kfHtml;
+
+        // 计分板行数 / 击杀提示变化会改变栏位高度 → 重新计算画布缩放
+        var fitKey = state.players.length + '|' + state.killfeed.length;
+        if (fitKey !== lastFitKey) { lastFitKey = fitKey; queueFitCanvas(); }
+      }
+
+      function escapeHtml(s) {
+        var d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+      }
+
+      // ===== 画布自适应缩放（只改 CSS 尺寸，内部逻辑分辨率恒为 800×600）=====
+      var topBarEl = document.querySelector('.top-bar');
+      var bottomBarEl = document.querySelector('.bottom-bar');
+
+      function fitCanvas() {
+        if (gameScreen.style.display === 'none') return;
+        var chrome = (topBarEl ? topBarEl.offsetHeight : 0) +
+          (bottomBarEl ? bottomBarEl.offsetHeight : 0) + 44;  // 44 ≈ 页面 padding + flex 间距 + 栏位 margin
+        var availW = window.innerWidth - 16;
+        var availH = window.innerHeight - chrome;
+        var scale = availW / 800;
+        // 高度足够时才按高度约束；矮屏（横屏手机）则允许页面滚动而不是把画布缩得过小
+        if (availH >= 260) scale = Math.min(scale, availH / 600);
+        scale = Math.max(0.35, Math.min(1, scale));  // 不放大，保持原生 800×600 观感
+        var w = Math.round(800 * scale);
+        canvas.style.width = w + 'px';
+        canvas.style.height = Math.round(600 * scale) + 'px';
+        if (topBarEl) topBarEl.style.width = w + 'px';
+        if (bottomBarEl) bottomBarEl.style.width = w + 'px';
+      }
+
+      var fitQueued = false;
+      function queueFitCanvas() {
+        if (fitQueued) return;
+        fitQueued = true;
+        requestAnimationFrame(function () { fitQueued = false; fitCanvas(); });
+      }
+
+      window.addEventListener('resize', queueFitCanvas);
+      window.addEventListener('orientationchange', queueFitCanvas);
+
+      // ===== 输入 =====
+      document.addEventListener('keydown', function (e) {
+        if (chatFocused) {
+          if (e.key === 'Enter' || e.key === 'Escape') {
+            chatInput.blur();
+            e.preventDefault();
+          }
+          return;
+        }
+        var k = e.key.toLowerCase();
+        keys[k] = true;
+        if (k === 'enter') { chatInput.focus(); e.preventDefault(); }
+      });
+
+      document.addEventListener('keyup', function (e) {
+        var k = e.key.toLowerCase();
+        keys[k] = false;
+      });
+
+      chatInput.addEventListener('focus', function () { chatFocused = true; });
+      chatInput.addEventListener('blur', function () { chatFocused = false; });
+      chatInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          var text = chatInput.value.trim();
+          if (text && ws && ws.readyState === 1) {
+            ws.send(JSON.stringify({ t: 'chat', msg: text }));
+          }
+          chatInput.value = '';
+          chatInput.blur();
+          e.preventDefault();
+        }
+        e.stopPropagation();
+      });
+
+      // 鼠标
+      canvas.addEventListener('mousemove', function (e) {
+        var rect = canvas.getBoundingClientRect();
+        var sx = 800 / rect.width, sy = 600 / rect.height;
+        mouse.x = (e.clientX - rect.left) * sx;
+        mouse.y = (e.clientY - rect.top) * sy;
+      });
+      canvas.addEventListener('mousedown', function (e) { mouse.down = true; });
+      document.addEventListener('mouseup', function () { mouse.down = false; });
+      // 触屏支持
+      canvas.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        var rect = canvas.getBoundingClientRect();
+        var sx = 800 / rect.width, sy = 600 / rect.height;
+        var t = e.changedTouches[0];
+        mouse.x = (t.clientX - rect.left) * sx;
+        mouse.y = (t.clientY - rect.top) * sy;
+        mouse.down = true;
+      }, { passive: false });
+      canvas.addEventListener('touchmove', function (e) {
+        e.preventDefault();
+        var rect = canvas.getBoundingClientRect();
+        var sx = 800 / rect.width, sy = 600 / rect.height;
+        var t = e.changedTouches[0];
+        mouse.x = (t.clientX - rect.left) * sx;
+        mouse.y = (t.clientY - rect.top) * sy;
+      }, { passive: false });
+      canvas.addEventListener('touchend', function (e) { mouse.down = false; });
+
+      // ===== 触屏虚拟控件（多点触控：摇杆 + 开火键，按 touch identifier 追踪）=====
+      var joyVec = { x: 0, y: 0 };      // 归一化摇杆方向（-1..1）
+      var joyTouchId = null;
+      var fireTouchId = null;
+      var fireHeld = false;
+      var joyBase = $('joyBase');
+      var joyKnob = $('joyKnob');
+      var fireBtn = $('fireBtn');
+
+      function joyMove(t) {
+        var r = joyBase.getBoundingClientRect();
+        var max = r.width / 2 - 10;
+        var dx = t.clientX - (r.left + r.width / 2);
+        var dy = t.clientY - (r.top + r.height / 2);
+        var d = Math.hypot(dx, dy);
+        if (d > max) { dx = dx / d * max; dy = dy / d * max; }
+        joyKnob.style.transform = 'translate(' + dx + 'px,' + dy + 'px)';
+        joyVec.x = dx / max;
+        joyVec.y = dy / max;
+      }
+
+      function joyEnd() {
+        joyTouchId = null;
+        joyVec.x = 0;
+        joyVec.y = 0;
+        joyKnob.style.transform = '';
+      }
+
+      joyBase.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        if (joyTouchId !== null) return;
+        joyTouchId = e.changedTouches[0].identifier;
+        joyMove(e.changedTouches[0]);
+      }, { passive: false });
+
+      // 移动/抬起挂在 document 上：手指滑出摇杆底盘也能继续跟随
+      document.addEventListener('touchmove', function (e) {
+        if (joyTouchId === null) return;
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var t = e.changedTouches[i];
+          if (t.identifier === joyTouchId) { e.preventDefault(); joyMove(t); }
+        }
+      }, { passive: false });
+
+      function onTouchEnd(e) {
+        for (var i = 0; i < e.changedTouches.length; i++) {
+          var id = e.changedTouches[i].identifier;
+          if (id === joyTouchId) joyEnd();
+          if (id === fireTouchId) {
+            fireTouchId = null;
+            fireHeld = false;
+            fireBtn.classList.remove('active');
+          }
+        }
+      }
+      document.addEventListener('touchend', onTouchEnd);
+      document.addEventListener('touchcancel', onTouchEnd);
+
+      fireBtn.addEventListener('touchstart', function (e) {
+        e.preventDefault();
+        if (fireTouchId !== null) return;
+        fireTouchId = e.changedTouches[0].identifier;
+        fireHeld = true;
+        fireBtn.classList.add('active');
+      }, { passive: false });
+
+      // ===== 输入发送 =====
+      function sendInput() {
+        if (!ws || ws.readyState !== 1 || !myId) return;
+        if (isSpectator) return;   // 观战者不下发任何操作
+        var dx = 0, dy = 0;
+        if (keys['w'] || keys['arrowup']) dy -= 1;
+        if (keys['s'] || keys['arrowdown']) dy += 1;
+        if (keys['a'] || keys['arrowleft']) dx -= 1;
+        if (keys['d'] || keys['arrowright']) dx += 1;
+        if (dx && dy) { dx *= 0.7071; dy *= 0.7071; }
+        // 虚拟摇杆：方向阈值化为 8 向（与 WASD 按键状态等效）后与键盘输入合并
+        var jx = 0, jy = 0;
+        if (joyVec.y < -0.35) jy -= 1;
+        if (joyVec.y > 0.35) jy += 1;
+        if (joyVec.x < -0.35) jx -= 1;
+        if (joyVec.x > 0.35) jx += 1;
+        if (jx && jy) { jx *= 0.7071; jy *= 0.7071; }
+        dx += jx; dy += jy;
+        var dl = Math.hypot(dx, dy);
+        if (dl > 1) { dx /= dl; dy /= dl; }
+        // 触屏瞄准策略：按住开火键时沿当前移动方向瞄准；无移动输入则保持上次瞄准
+        var shooting = mouse.down || fireHeld;
+        if (fireHeld && (dx || dy) && state && state.players) {
+          for (var i = 0; i < state.players.length; i++) {
+            if (state.players[i].id === myId) {
+              mouse.x = state.players[i].x + dx * 160;
+              mouse.y = state.players[i].y + dy * 160;
+              break;
+            }
+          }
+        }
+        ws.send(JSON.stringify({
+          t: 'input', dx: dx, dy: dy,
+          mx: mouse.x, my: mouse.y, shoot: shooting
+        }));
+      }
+
+      // ===== Toast =====
+      var toastTimer = null;
+      function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(function () { toast.classList.remove('show'); }, 2500);
+      }
+
+      // ===== 聊天 =====
+      function addChat(name, color, msg) {
+        var log = $('chatLog');
+        var div = document.createElement('div');
+        div.className = 'line';
+        div.innerHTML = '<span class="cn" style="color:' + color + '">' + escapeHtml(name) + ':</span> ' + escapeHtml(msg);
+        log.appendChild(div);
+        log.scrollTop = log.scrollHeight;
+        while (log.children.length > 20) log.removeChild(log.firstChild);
+      }
+
+      // ===== 启动循环 =====
+      function startLoops() {
+        // 渲染循环 60fps
+        requestAnimationFrame(render);
+        // 输入发送 30fps
+        setInterval(sendInput, 1000 / 30);
+      }
+
+    })();
+  </script>
+<!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7f217925546646b2ac70e0e1ef877263"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+
+</html>
