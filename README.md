@@ -52,7 +52,12 @@ showroom/
    - `/` — gallery loads
    - `/schoolwork/calculus-interactive/` — fonts render (validates `.nojekyll`)
    - `/utils/net-test.html` — download test measures real speed (validates the bin)
-
+5. Replace beacon token of Cloudflare
+   ```
+   # old token: 5b4bb0354de74e8db5b29c3e3a4a3b8e
+   # new token: 7f217925546646b2ac70e0e1ef877263
+   find . -type f \( -name "*.html" -o -name "*.htm" \) -exec perl -pi -e 's/5b4bb0354de74e8db5b29c3e3a4a3b8e/7f217925546646b2ac70e0e1ef877263/g' {} +
+   ```
 ## Do NOT publish
 
 - `../notes/` — internal working notes containing local machine paths.
