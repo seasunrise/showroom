@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b2a4a">
+  <meta name="description" content="写给机械新生的知识闯关小游戏：认零件、配工具、排装配、猜机构、选配合，从学徒一路晋级工程师。">
+  <title>机械工坊 · Mech Workshop</title>
+  <style>
+    :root {
+      --bg: #0b2a4a;
+      --bg-deep: #071e36;
+      --panel: rgba(15, 56, 96, .78);
+      --panel-2: rgba(10, 42, 74, .9);
+      --line: #8fd0ff;
+      --line-dim: #3d6ea5;
+      --grid: rgba(143, 208, 255, .055);
+      --text: #eaf6ff;
+      --text-dim: #9fc3e0;
+      --accent: #fbbf24;
+      --ok: #34d399;
+      --bad: #f87171;
+      --radius: 14px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      overflow-x: clip;
+      overscroll-behavior: none;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background:
+        radial-gradient(1000px 500px at 50% -12%, rgba(61, 110, 165, .35) 0%, transparent 60%),
+        linear-gradient(var(--grid) 1px, transparent 1px) 0 0/36px 36px,
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px) 0 0/36px 36px,
+        linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 100%);
+      color: var(--text);
+      font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    #app { min-height: 100vh; min-height: 100dvh; }
+
+    /* ===== 屏幕切换 ===== */
+    [data-screen] {
+      display: none;
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow-y: auto;
+      padding: calc(18px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));
+    }
+
+    [data-screen].active { display: flex; flex-direction: column; align-items: center; }
+
+    .wrap { width: 100%; max-width: 560px; margin: auto; display: flex; flex-direction: column; gap: 14px; }
+
+    /* ===== 通用组件 ===== */
+    .btn {
+      display: block;
+      width: 100%;
+      min-height: 50px;
+      padding: 13px 18px;
+      border-radius: var(--radius);
+      border: 1.5px solid var(--line-dim);
+      background: rgba(143, 208, 255, .08);
+      color: var(--text);
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: transform .12s, background .2s, border-color .2s;
+      text-align: center;
+    }
+
+    .btn:active { transform: scale(.97); }
+
+    .btn.primary {
+      background: linear-gradient(135deg, #1d6fb8 0%, #155a9c 100%);
+      border-color: var(--line);
+      box-shadow: 0 4px 18px rgba(29, 111, 184, .4);
+    }
+
+    .btn.ghost { background: transparent; color: var(--text-dim); }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line-dim);
+      border-radius: var(--radius);
+      backdrop-filter: blur(6px);
+      padding: 16px;
+    }
+
+    .dim { color: var(--text-dim); }
+    .center { text-align: center; }
+
+    /* ===== 标题屏 ===== */
+    .game-logo {
+      text-align: center;
+      padding: 18px 0 6px;
+    }
+
+    .game-logo svg { width: 92px; height: 92px; }
+
+    .game-title {
+      font-size: clamp(30px, 8vw, 40px);
+      letter-spacing: 6px;
+      font-weight: 800;
+      background: linear-gradient(90deg, var(--line) 10%, #ffffff 50%, var(--accent) 90%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 8px;
+    }
+
+    .game-sub { color: var(--text-dim); font-size: 14px; letter-spacing: 2px; margin-top: 6px; }
+
+    .level-brief {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 10px 12px;
+      border: 1px dashed var(--line-dim);
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .level-brief .no {
+      flex: none;
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: 1.5px solid var(--line);
+      color: var(--line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+
+    .best-line { text-align: center; font-size: 14px; color: var(--accent); letter-spacing: 1px; min-height: 20px; }
+
+    /* ===== 选关地图 ===== */
+    .map-title { font-size: 20px; font-weight: 700; letter-spacing: 3px; text-align: center; }
+
+    .map-node {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line-dim);
+      background: var(--panel);
+      cursor: pointer;
+      transition: transform .12s, border-color .2s;
+      text-align: left;
+      width: 100%;
+      color: var(--text);
+    }
+
+    .map-node:not(.locked):active { transform: scale(.98); }
+    .map-node:not(.locked):hover { border-color: var(--line); }
+
+    .map-node.locked { opacity: .42; cursor: not-allowed; }
+
+    .map-badge {
+      flex: none;
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      border: 1.5px solid var(--line);
+      background: rgba(143, 208, 255, .1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; color: var(--line);
+    }
+
+    .map-node.done .map-badge { border-color: var(--ok); color: var(--ok); }
+
+    .map-info { flex: 1; min-width: 0; }
+    .map-name { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+    .map-desc { font-size: 13px; color: var(--text-dim); margin-top: 3px; }
+    .map-state { flex: none; font-size: 12px; color: var(--accent); font-weight: 600; }
+
+    /* ===== 关卡说明 ===== */
+    .intro-kicker { text-align: center; color: var(--accent); font-size: 13px; letter-spacing: 3px; }
+    .intro-title { text-align: center; font-size: 26px; font-weight: 800; letter-spacing: 2px; }
+    .intro-list { display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.7; }
+    .intro-list li { list-style: none; padding-left: 18px; position: relative; }
+    .intro-list li::before { content: ""; position: absolute; left: 2px; top: .62em; width: 7px; height: 7px; border-radius: 2px; background: var(--line); }
+
+    /* ===== HUD ===== */
+    .hud {
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      background: var(--panel-2);
+      border: 1px solid var(--line-dim);
+      border-radius: 12px;
+      font-size: 13px;
+      position: sticky;
+      top: calc(8px + env(safe-area-inset-top));
+      z-index: 20;
+    }
+
+    .hud .back {
+      flex: none;
+      border: none; background: none;
+      color: var(--text-dim); font-size: 18px; cursor: pointer;
+      width: 34px; height: 34px; border-radius: 8px;
+    }
+    .hud .back:active { background: rgba(143, 208, 255, .12); }
+
+    .hud-level { font-weight: 700; letter-spacing: 1px; white-space: nowrap; }
+    .hud-progress { flex: 1; display: flex; gap: 5px; justify-content: center; }
+
+    .hud-dot { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid var(--line-dim); }
+    .hud-dot.cur { border-color: var(--accent); background: var(--accent); }
+    .hud-dot.ok { border-color: var(--ok); background: var(--ok); }
+    .hud-dot.bad { border-color: var(--bad); background: var(--bad); }
+
+    .hud-score { color: var(--accent); font-weight: 700; white-space: nowrap; }
+    .hud-combo { color: #fb923c; font-weight: 700; font-size: 12px; white-space: nowrap; min-width: 34px; }
+
+    .timer-ring { flex: none; width: 34px; height: 34px; }
+    .timer-ring circle { fill: none; stroke-width: 3.5; }
+    .timer-ring .bgc { stroke: rgba(143, 208, 255, .18); }
+    .timer-ring .fgc { stroke: var(--accent); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+    .timer-ring text { fill: var(--text); font-size: 11px; font-weight: 700; }
+
+    /* ===== 答题区 ===== */
+    .quiz-body { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+
+    .q-prompt { font-size: 16px; font-weight: 600; text-align: center; letter-spacing: .5px; line-height: 1.6; }
+
+    .q-stage {
+      background:
+        linear-gradient(rgba(143, 208, 255, .06) 1px, transparent 1px) 0 0/22px 22px,
+        linear-gradient(90deg, rgba(143, 208, 255, .06) 1px, transparent 1px) 0 0/22px 22px,
+        var(--panel-2);
+      border: 1px solid var(--line-dim);
+      border-radius: var(--radius);
+      display: flex; align-items: center; justify-content: center;
+      padding: 10px;
+      min-height: 180px;
+    }
+
+    .q-stage svg { width: min(62vw, 280px); height: auto; max-height: 38vh; }
+    .q-stage svg.wide { width: 100%; max-width: 460px; max-height: 34vh; }
+
+    .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opts.cols3 { grid-template-columns: 1fr; }
+
+    .opt {
+      min-height: 52px;
+      padding: 12px 10px;
+      border-radius: 12px;
+      border: 1.5px solid var(--line-dim);
+      background: rgba(143, 208, 255, .07);
+      color: var(--text);
+      font-size: 15px; font-weight: 600;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, transform .12s;
+    }
+
+    .opt:active { transform: scale(.97); }
+    .opt.right { border-color: var(--ok); background: rgba(52, 211, 153, .18); }
+    .opt.wrong { border-color: var(--bad); background: rgba(248, 113, 113, .15); animation: shake .3s; }
+    .opt:disabled { cursor: default; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* ===== 配对关 ===== */
+    .match-wrap { position: relative; }
+    .match-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
+    .match-col { display: flex; flex-direction: column; gap: 10px; }
+
+    .match-item {
+      min-height: 56px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1.5px solid var(--line-dim);
+      background: var(--panel);
+      color: var(--text);
+      font-size: 14px; font-weight: 600;
+      display: flex; align-items: center; justify-content: center; text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s, opacity .2s;
+      line-height: 1.35;
+    }
+
+    .match-item.sel { border-color: var(--accent); background: rgba(251, 191, 36, .14); }
+    .match-item.done { opacity: .35; border-style: dashed; cursor: default; }
+    .match-item.flash-bad { border-color: var(--bad); animation: shake .3s; }
+
+    .match-lines { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+    .match-lines path { fill: none; stroke: var(--ok); stroke-width: 2.5; opacity: .8; }
+
+    /* ===== 排序关 ===== */
+    .order-scene { display: flex; justify-content: center; }
+    .order-scene svg { width: min(80vw, 380px); height: auto; }
+
+    .order-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .order-card {
+      display: flex; align-items: center; gap: 12px;
+      min-height: 54px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1.5px solid var(--line-dim);
+      background: var(--panel);
+      font-size: 15px; font-weight: 600;
+      cursor: grab;
+      transition: border-color .15s, background .15s;
+      touch-action: none;
+    }
+
+    .order-card .pos {
+      flex: none; width: 26px; height: 26px; border-radius: 50%;
+      border: 1.5px solid var(--line); color: var(--line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700;
+    }
+
+    .order-card.sel { border-color: var(--accent); background: rgba(251, 191, 36, .14); }
+    .order-card.dragging { opacity: .85; border-color: var(--accent); z-index: 30; position: relative; box-shadow: 0 8px 24px rgba(0, 0, 0, .45); }
+
+    .order-hint { text-align: center; font-size: 12.5px; color: var(--text-dim); }
+
+    /* ===== 反馈条 ===== */
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      transform: translate(-50%, 140%);
+      width: min(92vw, 520px);
+      border-radius: 14px;
+      padding: 13px 16px;
+      z-index: 60;
+      border: 1.5px solid;
+      transition: transform .3s cubic-bezier(.2, .9, .3, 1.2);
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    #toast.show { transform: translate(-50%, 0); }
+    #toast.ok { border-color: var(--ok); background: rgba(6, 52, 38, .92); }
+    #toast.bad { border-color: var(--bad); background: rgba(62, 16, 16, .92); }
+
+    #toast .t-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 800; font-size: 15px; letter-spacing: 1px; }
+    #toast.ok .t-head { color: var(--ok); }
+    #toast.bad .t-head { color: var(--bad); }
+    #toast .t-gain { color: var(--accent); font-size: 14px; }
+    #toast .t-tip { margin-top: 5px; font-size: 13.5px; line-height: 1.6; color: var(--text); }
+
+    /* ===== 结算 ===== */
+    .big-score { text-align: center; font-size: 46px; font-weight: 800; color: var(--accent); letter-spacing: 2px; }
+    .rank-badge {
+      margin: 4px auto 0;
+      width: fit-content;
+      padding: 8px 22px;
+      border-radius: 999px;
+      border: 2px solid var(--accent);
+      color: var(--accent);
+      font-size: 20px; font-weight: 800; letter-spacing: 4px;
+      box-shadow: 0 0 24px rgba(251, 191, 36, .25);
+    }
+
+    .stat-row { display: flex; justify-content: space-between; font-size: 14px; padding: 7px 2px; border-bottom: 1px dashed rgba(143, 208, 255, .18); }
+    .stat-row:last-child { border-bottom: none; }
+
+    .lv-bar { display: flex; align-items: center; gap: 10px; font-size: 13px; margin-top: 8px; }
+    .lv-bar .nm { flex: none; width: 96px; color: var(--text-dim); }
+    .lv-bar .tr { flex: 1; height: 10px; border-radius: 5px; background: rgba(143, 208, 255, .12); overflow: hidden; }
+    .lv-bar .fl { height: 100%; border-radius: 5px; background: linear-gradient(90deg, #1d6fb8, var(--line)); }
+    .lv-bar .sc { flex: none; width: 52px; text-align: right; color: var(--accent); font-weight: 700; }
+
+    /* ===== 错题回顾 ===== */
+    .review-card { border-left: 3px solid var(--bad); }
+    .review-card .rq { font-size: 14.5px; font-weight: 700; line-height: 1.55; }
+    .review-card .ra { margin-top: 8px; font-size: 13.5px; line-height: 1.7; }
+    .review-card .ra .yours { color: var(--bad); }
+    .review-card .ra .right { color: var(--ok); font-weight: 700; }
+    .review-card .rt { margin-top: 6px; font-size: 13px; color: var(--text-dim); line-height: 1.65; }
+    .review-lv { display: inline-block; font-size: 11px; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; padding: 1px 7px; margin-bottom: 6px; letter-spacing: 1px; }
+
+    .empty-note { text-align: center; color: var(--text-dim); padding: 30px 0; font-size: 14px; line-height: 1.8; }
+
+    /* ===== SVG 图纸元素通用 ===== */
+    .bp { stroke: var(--line); stroke-width: 2.2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .bp-thin { stroke: var(--line); stroke-width: 1.3; fill: none; stroke-linecap: round; }
+    .bp-dim { stroke: var(--line-dim); stroke-width: 1.3; fill: none; stroke-dasharray: 4 4; }
+    .bp-fill { fill: rgba(143, 208, 255, .13); stroke: var(--line); stroke-width: 2; }
+    .bp-hatch { stroke: var(--line-dim); stroke-width: 1.2; }
+
+    .spin-a { animation: spin 3.6s linear infinite; transform-box: fill-box; transform-origin: center; }
+    .spin-b { animation: spin 5.4s linear infinite reverse; transform-box: fill-box; transform-origin: center; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== 桌面端 ===== */
+    @media (min-width: 900px) {
+      .wrap, .quiz-body, .hud { max-width: 600px; }
+      .game-logo svg { width: 110px; height: 110px; }
+      .q-stage svg { width: 300px; }
+      .opt:hover { border-color: var(--line); background: rgba(143, 208, 255, .13); }
+      .btn:hover { border-color: var(--line); }
+    }
+
+    @media (max-width: 380px) {
+      .opts { grid-template-columns: 1fr; }
+      .match-cols { gap: 44px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+
+    <!-- 开始页 -->
+    <section data-screen="title">
+      <div class="wrap">
+        <div class="game-logo">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <g class="bp" id="logo-gear"></g>
+            <circle cx="50" cy="50" r="10" class="bp-fill"/>
+          </svg>
+        </div>
+        <h1 class="game-title center">机械工坊</h1>
+        <p class="game-sub center">MECH WORKSHOP · 机械新生闯关挑战</p>
+        <div class="panel">
+          <div class="level-brief"><span class="no">1</span><span>零件快认 —— 看图纸认出标准件</span></div>
+          <div style="height:8px"></div>
+          <div class="level-brief"><span class="no">2</span><span>金工配对 —— 加工任务找到对的工具</span></div>
+          <div style="height:8px"></div>
+          <div class="level-brief"><span class="no">3</span><span>装配排序 —— 把零件按正确顺序装上</span></div>
+          <div style="height:8px"></div>
+          <div class="level-brief"><span class="no">4</span><span>机构猜猜看 —— 看动画说出机构名</span></div>
+          <div style="height:8px"></div>
+          <div class="level-brief"><span class="no">5</span><span>配合判断 —— 为轴孔选择合适的配合</span></div>
+        </div>
+        <div class="best-line" id="title-best"></div>
+        <button class="btn primary" id="btn-start">进入工坊</button>
+        <p class="center dim" style="font-size:12.5px">闯关晋级：学徒 → 技工 → 高级技工 → 技师 → 工程师</p>
+      </div>
+    </section>
+
+    <!-- 选关地图 -->
+    <section data-screen="map">
+      <div class="wrap">
+        <h2 class="map-title">— 工坊地图 —</h2>
+        <div id="map-list" style="display:flex;flex-direction:column;gap:10px"></div>
+        <button class="btn ghost" id="btn-map-back">返回首页</button>
+      </div>
+    </section>
+
+    <!-- 关卡说明 -->
+    <section data-screen="intro">
+      <div class="wrap">
+        <p class="intro-kicker" id="intro-kicker"></p>
+        <h2 class="intro-title" id="intro-name"></h2>
+        <div class="panel">
+          <ul class="intro-list" id="intro-list"></ul>
+        </div>
+        <button class="btn primary" id="btn-intro-go">开始挑战</button>
+        <button class="btn ghost" id="btn-intro-back">返回地图</button>
+      </div>
+    </section>
+
+    <!-- 答题 -->
+    <section data-screen="quiz">
+      <div class="hud">
+        <button class="back" id="hud-back" aria-label="返回地图">‹</button>
+        <span class="hud-level" id="hud-level"></span>
+        <div class="hud-progress" id="hud-progress"></div>
+        <span class="hud-combo" id="hud-combo"></span>
+        <svg class="timer-ring" id="hud-timer" viewBox="0 0 36 36" style="display:none">
+          <circle class="bgc" cx="18" cy="18" r="14"></circle>
+          <circle class="fgc" id="timer-arc" cx="18" cy="18" r="14" stroke-dasharray="88" stroke-dashoffset="0"></circle>
+          <text id="timer-num" x="18" y="22" text-anchor="middle">15</text>
+        </svg>
+        <span class="hud-score" id="hud-score">0</span>
+      </div>
+      <div class="quiz-body" id="quiz-body"></div>
+    </section>
+
+    <!-- 关卡小结 -->
+    <section data-screen="result">
+      <div class="wrap">
+        <p class="intro-kicker">关卡完成</p>
+        <h2 class="intro-title" id="result-name"></h2>
+        <div class="panel">
+          <div class="big-score" id="result-score">0</div>
+          <div class="stat-row"><span class="dim">答对</span><span id="result-right"></span></div>
+          <div class="stat-row"><span class="dim">最高连击</span><span id="result-combo"></span></div>
+          <div class="stat-row"><span class="dim">错题</span><span id="result-wrong"></span></div>
+        </div>
+        <button class="btn primary" id="btn-result-next"></button>
+        <button class="btn ghost" id="btn-result-map">返回地图</button>
+      </div>
+    </section>
+
+    <!-- 总榜结算 -->
+    <section data-screen="final">
+      <div class="wrap">
+        <p class="intro-kicker">本轮总成绩</p>
+        <div class="big-score" id="final-score">0</div>
+        <div class="rank-badge" id="final-rank">学徒</div>
+        <div class="panel" id="final-bars"></div>
+        <button class="btn primary" id="btn-final-review">查看错题回顾</button>
+        <button class="btn" id="btn-final-again">再来一轮</button>
+        <button class="btn ghost" id="btn-final-home">返回首页</button>
+      </div>
+    </section>
+
+    <!-- 错题回顾 -->
+    <section data-screen="review">
+      <div class="wrap">
+        <h2 class="map-title">— 错题知识卡片 —</h2>
+        <div id="review-list" style="display:flex;flex-direction:column;gap:12px"></div>
+        <button class="btn primary" id="btn-review-back">返回总榜</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- 反馈条 -->
+  <div id="toast"><div class="t-head"><span id="toast-title"></span><span class="t-gain" id="toast-gain"></span></div><div class="t-tip" id="toast-tip"></div></div>
+
+  <!-- 零件图 symbol 库（蓝图线条风） -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <!-- 六角螺栓：头部侧视 + 螺杆 + 螺纹虚线 -->
+      <symbol id="p-bolt" viewBox="0 0 100 100">
+        <rect x="14" y="28" width="22" height="44" rx="2" class="bp-fill"/>
+        <line x1="22" y1="28" x2="22" y2="72" class="bp-thin"/>
+        <line x1="28" y1="28" x2="28" y2="72" class="bp-thin"/>
+        <rect x="36" y="38" width="46" height="24" class="bp"/>
+        <line x1="48" y1="38" x2="42" y2="62" class="bp-dim"/>
+        <line x1="58" y1="38" x2="52" y2="62" class="bp-dim"/>
+        <line x1="68" y1="38" x2="62" y2="62" class="bp-dim"/>
+        <line x1="78" y1="38" x2="72" y2="62" class="bp-dim"/>
+      </symbol>
+      <!-- 六角螺母：俯视六边形 + 螺纹孔 -->
+      <symbol id="p-nut" viewBox="0 0 100 100">
+        <polygon points="50,16 79.4,33 79.4,67 50,84 20.6,67 20.6,33" class="bp-fill"/>
+        <circle cx="50" cy="50" r="17" class="bp"/>
+        <circle cx="50" cy="50" r="13" class="bp-dim"/>
+      </symbol>
+      <!-- 平垫圈：两同心圆 -->
+      <symbol id="p-washer" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="32" class="bp-fill"/>
+        <circle cx="50" cy="50" r="15" class="bp"/>
+        <line x1="50" y1="10" x2="50" y2="22" class="bp-dim"/>
+        <line x1="50" y1="78" x2="50" y2="90" class="bp-dim"/>
+      </symbol>
+      <!-- 深沟球轴承：内外圈 + 滚珠 -->
+      <symbol id="p-bearing" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="38" class="bp"/>
+        <circle cx="50" cy="50" r="30" class="bp-thin"/>
+        <circle cx="50" cy="50" r="20" class="bp-thin"/>
+        <circle cx="50" cy="50" r="12" class="bp"/>
+        <g class="bp-fill" id="bearing-balls"></g>
+      </symbol>
+      <!-- 平键 A 型：圆头长条 -->
+      <symbol id="p-key" viewBox="0 0 100 100">
+        <rect x="16" y="38" width="68" height="24" rx="12" class="bp-fill"/>
+        <line x1="24" y1="50" x2="76" y2="50" class="bp-dim"/>
+      </symbol>
+      <!-- 圆柱销：带倒角长条 -->
+      <symbol id="p-pin" viewBox="0 0 100 100">
+        <path d="M24 38 H76 L84 46 V54 L76 62 H24 L16 54 V46 Z" class="bp-fill"/>
+        <line x1="16" y1="50" x2="84" y2="50" class="bp-dim"/>
+      </symbol>
+      <!-- 压缩弹簧：螺旋投影折线 -->
+      <symbol id="p-spring" viewBox="0 0 100 100">
+        <path d="M18 30 L28 70 L38 30 L48 70 L58 30 L68 70 L78 30 L88 70" class="bp"/>
+        <line x1="10" y1="30" x2="22" y2="30" class="bp-thin"/>
+        <line x1="84" y1="70" x2="96" y2="70" class="bp-thin"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <script>
+  'use strict';
+  /* ============================================================
+   * DATA —— 题库、关卡、称号
+   * ============================================================ */
+  const STORE_KEY = 'mech-workshop-v1';
+
+  const PARTS = [
+    { id: 'bolt',    name: '六角螺栓',     tip: '六角螺栓与螺母配对拧紧，是最常用的可拆卸紧固件。' },
+    { id: 'nut',     name: '六角螺母',     tip: '螺母与螺栓配合使用，靠螺纹副摩擦与预紧力防松。' },
+    { id: 'washer',  name: '平垫圈',       tip: '平垫圈垫在螺母一侧，保护零件表面并分散压强。' },
+    { id: 'bearing', name: '深沟球轴承',   tip: '深沟球轴承主要承受径向载荷，是应用最广的滚动轴承。' },
+    { id: 'gear',    name: '直齿圆柱齿轮', tip: '直齿轮用于平行轴之间传动，传动比恒定、结构简单。' },
+    { id: 'key',     name: '平键（A型）',  tip: '平键连接轴与轮毂传递转矩，A 型为圆头，键槽应力集中小。' },
+    { id: 'pin',     name: '圆柱销',       tip: '圆柱销靠过盈固定在销孔中，用于零件间的定位与连接。' },
+    { id: 'spring',  name: '压缩弹簧',     tip: '压缩弹簧储存弹性势能，常用于缓冲、复位与测力。' },
+  ];
+
+  const MATCH_PAIRS = [
+    { task: '一般精度长度测量', tool: '游标卡尺', tip: '游标卡尺读数精度 0.02mm，测长、测深都方便。' },
+    { task: '精测轴的外径',     tool: '千分尺',   tip: '外径千分尺精度达 0.01mm，是精测轴径的标准量具。' },
+    { task: '车削外圆',         tool: '车床',     tip: '车床工件旋转、刀具进给，主加工回转体外圆与端面。' },
+    { task: '铣削平面',         tool: '铣床',     tip: '铣床刀具旋转、工件进给，主加工平面、沟槽与成形面。' },
+    { task: '钻削通孔',         tool: '钻床',     tip: '钻床配麻花钻加工孔，是孔粗加工的主力设备。' },
+    { task: '攻制内螺纹',       tool: '丝锥',     tip: '丝锥配合铰杠攻制内螺纹，头锥、二锥依次使用。' },
+  ];
+
+  const ORDER_QS = [
+    {
+      title: '螺栓连接 · 螺母侧装配',
+      scene: '螺栓已穿好两被连接件，请按从贴近零件向外的顺序排列螺母侧三件',
+      items: ['弹簧垫圈', '螺母', '平垫圈'],
+      correct: ['平垫圈', '弹簧垫圈', '螺母'],
+      tip: '平垫圈贴着零件护表面，弹簧垫圈紧靠螺母防松，最后拧螺母。',
+      fig: 'bolt'
+    },
+    {
+      title: '螺栓连接 · 拆卸顺序',
+      scene: '现在要拆开这个螺栓连接，请按拆卸先后顺序排列',
+      items: ['平垫圈', '弹簧垫圈', '螺母'],
+      correct: ['螺母', '弹簧垫圈', '平垫圈'],
+      tip: '拆卸与装配相反：先松开螺母，再依次取下弹垫、平垫。',
+      fig: 'bolt'
+    },
+    {
+      title: '轴系零件 · 安装顺序',
+      scene: '在轴上安装齿轮传动组件，请按装配先后排列（圆螺母最后锁紧）',
+      items: ['轴套', '圆螺母', '平键', '齿轮'],
+      correct: ['平键', '齿轮', '轴套', '圆螺母'],
+      tip: '先把平键装入键槽，再装齿轮，轴套轴向定位，圆螺母最后锁紧。',
+      fig: 'shaft'
+    },
+  ];
+
+  const MECHS = [
+    { id: 'slider-crank', name: '曲柄滑块机构', tip: '曲柄整周转动、滑块往复直线运动——内燃机与冲床的核心机构。' },
+    { id: 'crank-rocker', name: '曲柄摇杆机构', tip: '曲柄整周转、摇杆来回摆——雷达天线俯仰、搅拌机常用它。' },
+    { id: 'cam',          name: '凸轮机构',     tip: '凸轮廓线决定从动件运动规律——内燃机气门开闭就靠它精确控制。' },
+    { id: 'gear-pair',    name: '外啮合齿轮传动', tip: '一对外啮合齿轮转向相反、传动比恒定，是变速箱的基础单元。' },
+  ];
+
+  const FIT_OPTS = ['间隙配合', '过渡配合', '过盈配合'];
+  const FIT_QS = [
+    { scene: '滑动轴承与轴颈：轴在轴承中高速转动，需要润滑油膜', answer: '间隙配合', tip: '相对转动处必须留间隙形成油膜，如 H7/f7。' },
+    { scene: '活塞与气缸壁：往复直线运动，还要考虑受热膨胀', answer: '间隙配合', tip: '往复运动且有热膨胀，取较小间隙并靠活塞环密封。' },
+    { scene: '滚动轴承内圈与轴颈：内圈随轴一起旋转', answer: '过盈配合', tip: '内圈随轴转动，过盈（如 k6/m6）防止松动爬动磨损。' },
+    { scene: '定位圆柱销与销孔：要求精确固定两零件相对位置', answer: '过盈配合', tip: '定位销靠过盈固定，保证重复定位精度；动配合留间隙、防转定心用过盈。' },
+  ];
+
+  const LEVELS = [
+    { name: '零件快认', type: 'part',  time: 15, brief: '看图纸认出标准件',
+      intro: ['屏幕上会出现一张零件图纸，从 4 个名称中选出正确答案', '每题限时 15 秒，答得越快奖励分越高', '共 6 题：螺栓、螺母、垫圈、轴承、齿轮、键、销、弹簧中抽取'] },
+    { name: '金工配对', type: 'match', time: 0, brief: '加工任务找到对的工具',
+      intro: ['左边是加工/测量任务，右边是工具设备', '先点左边的任务，再点右边对应的工具完成连线', '全部 6 对连完即过关，首次配对判分'] },
+    { name: '装配排序', type: 'order', time: 0, brief: '把零件按正确顺序装上',
+      intro: ['点击两枚零件卡可交换位置（也可直接拖拽）', '排成正确的装配/拆卸顺序后点「确认」', '共 3 题，都是车间里天天见的经典结构'] },
+    { name: '机构猜猜看', type: 'mech', time: 0, brief: '看动画说出机构名',
+      intro: ['观察台架上的机构运动动画', '从 4 个名称中选出它是哪种机构', '共 4 题：机械原理课四大基本机构'] },
+    { name: '配合判断', type: 'fit',   time: 0, brief: '为轴孔选择合适的配合',
+      intro: ['给出轴与孔的工作场景，选择配合类型', '口诀：动配合留间隙、防转定心用过盈、要拆要定心用过渡', '共 4 题'] },
+  ];
+
+  const RANKS = [
+    { min: 3100, name: '工 程 师' },
+    { min: 2500, name: '技 师' },
+    { min: 1900, name: '高级技工' },
+    { min: 1300, name: '技 工' },
+    { min: 0,    name: '学 徒' },
+  ];
+
+  /* ============================================================
+   * 工具函数
+   * ============================================================ */
+  const $ = s => document.querySelector(s);
+  const SVGNS = 'http://www.w3.org/2000/svg';
+  const shuffle = a => { const r = [...a]; for (let i = r.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[r[i], r[j]] = [r[j], r[i]]; } return r; };
+  function svgEl(tag, attrs) { const e = document.createElementNS(SVGNS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; }
+
+  /* 参数化齿轮路径：模数 m、齿数 z，齿形为梯形近似 */
+  function gearPath(cx, cy, z, m, klass) {
+    const r = m * z / 2, ra = r + m * 0.9, rf = r - m * 1.1;
+    const g = svgEl('g', {});
+    let d = '';
+    const step = Math.PI * 2 / z;
+    for (let i = 0; i < z; i++) {
+      const a = i * step;
+      const pts = [
+        [rf, a], [ra, a + step * 0.18], [ra, a + step * 0.42], [rf, a + step * 0.60]
+      ].map(([rr, aa]) => [cx + rr * Math.cos(aa), cy + rr * Math.sin(aa)]);
+      d += (i === 0 ? `M${pts[0][0].toFixed(2)} ${pts[0][1].toFixed(2)}` : '') +
+        `L${pts[1][0].toFixed(2)} ${pts[1][1].toFixed(2)}` +
+        `L${pts[2][0].toFixed(2)} ${pts[2][1].toFixed(2)}` +
+        `L${pts[3][0].toFixed(2)} ${pts[3][1].toFixed(2)}`;
+      const aN = a + step;
+      const nx = cx + rf * Math.cos(aN), ny = cy + rf * Math.sin(aN);
+      d += `A${rf.toFixed(2)} ${rf.toFixed(2)} 0 0 1 ${nx.toFixed(2)} ${ny.toFixed(2)}`;
+    }
+    d += 'Z';
+    g.appendChild(svgEl('path', { d, class: klass || 'bp-fill' }));
+    g.appendChild(svgEl('circle', { cx, cy, r: r.toFixed(2), class: 'bp-dim' }));
+    return g;
+  }
+
+  /* 初始化静态 SVG：logo 齿轮、轴承滚珠 */
+  (function initStaticSvg() {
+    const logo = $('#logo-gear');
+    logo.appendChild(gearPath(50, 50, 10, 4.6, 'bp'));
+    const balls = $('#bearing-balls');
+    for (let i = 0; i < 6; i++) {
+      const a = i * Math.PI / 3;
+      balls.appendChild(svgEl('circle', { cx: 50 + 25 * Math.cos(a), cy: 50 + 25 * Math.sin(a), r: 5 }));
+    }
+  })();
+
+  /* ============================================================
+   * ENGINE —— 状态、计分、存档
+   * ============================================================ */
+  const S = {
+    screen: 'title',
+    level: 0, q: 0, qs: [],
+    score: 0, combo: 0, maxCombo: 0,
+    qScore: 0, qRight: 0, qWrong: 0, qMaxCombo: 0,
+    wrongs: [],
+    unlocked: 1, best: 0, levelBest: [0, 0, 0, 0, 0],
+    lock: false, timer: null, raf: null,
+    dots: [],
+  };
+
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify({ unlocked: S.unlocked, best: S.best, levelBest: S.levelBest })); } catch (e) {}
+  }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if (d) { S.unlocked = d.unlocked || 1; S.best = d.best || 0; S.levelBest = d.levelBest || [0, 0, 0, 0, 0]; }
+    } catch (e) {}
+  }
+
+  function rankOf(score) { return RANKS.find(r => score >= r.min).name; }
+
+  function go(name) {
+    stopTimer(); stopRaf();
+    S.screen = name;
+    document.querySelectorAll('[data-screen]').forEach(el => el.classList.toggle('active', el.dataset.screen === name));
+    window.scrollTo(0, 0);
+  }
+
+  /* ---- 计时（限时关） ---- */
+  const TIMER_C = 88;
+  function startTimer(sec) {
+    stopTimer();
+    const ring = $('#hud-timer'), arc = $('#timer-arc'), num = $('#timer-num');
+    ring.style.display = 'block';
+    const t0 = performance.now();
+    S.timeLeft = sec;
+    S.timer = setInterval(() => {
+      const left = sec - (performance.now() - t0) / 1000;
+      S.timeLeft = Math.max(0, left);
+      arc.setAttribute('stroke-dashoffset', (TIMER_C * (1 - Math.max(0, left) / sec)).toFixed(1));
+      num.textContent = Math.ceil(Math.max(0, left));
+      if (left <= 0) { stopTimer(); onTimeout(); }
+    }, 100);
+  }
+  function stopTimer() { if (S.timer) { clearInterval(S.timer); S.timer = null; } $('#hud-timer').style.display = 'none'; }
+  function stopRaf() { if (S.raf) { cancelAnimationFrame(S.raf); S.raf = null; } }
+
+  /* ---- 判定与计分 ---- */
+  function judge(ok, info, dotIdx) {
+    if (S.lock) return;
+    S.lock = true;
+    let gain = 0;
+    if (ok) {
+      gain = 100;
+      if (LEVELS[S.level].time) gain += Math.min(30, Math.round(S.timeLeft) * 2);
+      if (S.combo >= 2) gain += Math.min(60, (S.combo - 1) * 20);
+      S.combo++;
+      S.maxCombo = Math.max(S.maxCombo, S.combo);
+      S.qMaxCombo = Math.max(S.qMaxCombo, S.combo);
+      S.qRight++;
+    } else {
+      S.combo = 0;
+      S.qWrong++;
+      S.wrongs.push(info);
+    }
+    S.score += gain; S.qScore += gain;
+    S.dots[dotIdx === undefined ? S.q : dotIdx] = ok ? 'ok' : 'bad';
+    updateHud();
+    return gain;
+  }
+
+  let toastTimer = null;
+  function showToast(ok, title, gain, tip, after) {
+    const t = $('#toast');
+    t.className = ok ? 'ok show' : 'bad show';
+    $('#toast-title').textContent = title;
+    $('#toast-gain').textContent = ok && gain > 0 ? '+' + gain : '';
+    $('#toast-tip').textContent = tip;
+    clearTimeout(toastTimer);
+    const close = () => { t.classList.remove('show'); clearTimeout(toastTimer); t.onclick = null; after && after(); };
+    t.onclick = close;
+    toastTimer = setTimeout(close, 1900);
+  }
+
+  function updateHud() {
+    $('#hud-score').textContent = S.score;
+    $('#hud-combo').textContent = S.combo >= 2 ? 'x' + S.combo + ' 连击' : '';
+    const box = $('#hud-progress');
+    box.innerHTML = '';
+    S.dots.forEach(d => {
+      const el = document.createElement('span');
+      el.className = 'hud-dot' + (d ? ' ' + d : '');
+      box.appendChild(el);
+    });
+  }
+
+  /* ---- 关卡流程 ---- */
+  function startLevel(i) {
+    S.level = i; S.q = 0;
+    S.qScore = 0; S.qRight = 0; S.qWrong = 0;
+    buildQuestions();
+    S.dots = new Array(S.qs.length).fill(null);
+    $('#hud-level').textContent = `第${'一二三四五'[i]}关 · ${LEVELS[i].name}`;
+    go('quiz');
+    renderQ();
+  }
+
+  function buildQuestions() {
+    const type = LEVELS[S.level].type;
+    if (type === 'part') {
+      const picked = shuffle(PARTS).slice(0, 6);
+      S.qs = picked.map(p => {
+        const distract = shuffle(PARTS.filter(x => x.id !== p.id)).slice(0, 3).map(x => x.name);
+        return { kind: 'part', part: p, opts: shuffle([p.name, ...distract]) };
+      });
+    } else if (type === 'match') {
+      S.qs = [{ kind: 'match' }]; // 整关一屏
+    } else if (type === 'order') {
+      S.qs = ORDER_QS.map(q => ({ kind: 'order', q, order: shuffle(q.items) }));
+    } else if (type === 'mech') {
+      S.qs = shuffle(MECHS).map(m => ({ kind: 'mech', mech: m, opts: shuffle(MECHS.map(x => x.name)) }));
+    } else if (type === 'fit') {
+      S.qs = shuffle(FIT_QS).map(q => ({ kind: 'fit', q, opts: shuffle(FIT_OPTS) }));
+    }
+  }
+
+  function renderQ() {
+    S.lock = false;
+    stopTimer(); stopRaf();
+    const body = $('#quiz-body');
+    body.innerHTML = '';
+    const q = S.qs[S.q];
+    ({ part: renderPartQ, match: renderMatchQ, order: renderOrderQ, mech: renderMechQ, fit: renderFitQ })[q.kind](body, q);
+    updateHud();
+    if (LEVELS[S.level].time) startTimer(LEVELS[S.level].time);
+  }
+
+  function nextQ() {
+    S.q++;
+    if (S.q >= S.qs.length) return levelResult();
+    renderQ();
+  }
+
+  function onTimeout() {
+    const q = S.qs[S.q];
+    if (q.kind === 'part') {
+      const gain = judge(false, { level: LEVELS[S.level].name, q: '识别图纸中的零件', yours: '超时未答', right: q.part.name, tip: q.part.tip });
+      markOptions(q.opts, q.part.name, -1);
+      showToast(false, '超时了', gain, `正确答案：${q.part.name}。${q.part.tip}`, nextQ);
+    }
+  }
+
+  function levelResult() {
+    stopTimer(); stopRaf();
+    const i = S.level;
+    if (S.qScore > (S.levelBest[i] || 0)) { S.levelBest[i] = S.qScore; }
+    if (S.qWrong === 0 || S.qRight > 0) S.unlocked = Math.max(S.unlocked, Math.min(5, i + 2));
+    if (S.score > S.best) S.best = S.score;
+    save();
+    $('#result-name').textContent = LEVELS[i].name;
+    $('#result-score').textContent = S.qScore;
+    const total = LEVELS[i].type === 'match' ? 6 : S.qs.length;
+    $('#result-right').textContent = `${S.qRight} / ${total}`;
+    $('#result-combo').textContent = 'x' + S.qMaxCombo;
+    $('#result-wrong').textContent = S.qWrong + ' 题';
+    $('#btn-result-next').textContent = i >= 4 ? '查看总成绩' : '下一关';
+    go('result');
+  }
+
+  function showFinal() {
+    $('#final-score').textContent = S.score;
+    $('#final-rank').textContent = rankOf(S.score);
+    const maxQ = [780, 600, 300, 400, 400];
+    $('#final-bars').innerHTML = LEVELS.map((l, i) => `
+      <div class="lv-bar"><span class="nm">${l.name}</span>
+      <span class="tr"><span class="fl" style="display:block;width:${Math.min(100, Math.round(100 * S.levelBest[i] / maxQ[i]))}%"></span></span>
+      <span class="sc">${S.levelBest[i]}</span></div>`).join('');
+    go('final');
+  }
+
+  /* ============================================================
+   * RENDER —— 各关渲染
+   * ============================================================ */
+
+  /* ---- 关 1：零件快认 ---- */
+  function renderPartQ(body, q) {
+    body.innerHTML = `
+      <p class="q-prompt">图纸上的零件是？（第 ${S.q + 1} / ${S.qs.length} 题）</p>
+      <div class="q-stage"><svg viewBox="0 0 100 100" id="part-svg"></svg></div>
+      <div class="opts">${q.opts.map((o, i) => `<button class="opt" data-i="${i}">${o}</button>`).join('')}</div>`;
+    const svg = $('#part-svg');
+    if (q.part.id === 'gear') {
+      svg.appendChild(gearPath(50, 50, 12, 3.4));
+      svg.appendChild(svgEl('circle', { cx: 50, cy: 50, r: 12, class: 'bp' }));
+      svg.appendChild(svgEl('rect', { x: 46.5, y: 36, width: 7, height: 6, class: 'bp-thin' }));
+    } else {
+      const use = svgEl('use', { href: '#p-' + q.part.id });
+      svg.appendChild(use);
+    }
+    body.querySelectorAll('.opt').forEach(btn => btn.addEventListener('click', () => {
+      if (S.lock) return;
+      stopTimer();
+      const pick = btn.textContent;
+      const ok = pick === q.part.name;
+      const gain = judge(ok, { level: LEVELS[S.level].name, q: '识别图纸中的零件', yours: pick, right: q.part.name, tip: q.part.tip });
+      markOptions(q.opts, q.part.name, ok ? -1 : [...body.querySelectorAll('.opt')].indexOf(btn));
+      showToast(ok, ok ? '答对了' : '答错了', gain, (ok ? '' : `正确答案：${q.part.name}。`) + q.part.tip, nextQ);
+    }));
+  }
+
+  function markOptions(opts, right, wrongIdx) {
+    document.querySelectorAll('#quiz-body .opt').forEach((b, i) => {
+      b.disabled = true;
+      if (b.textContent === right) b.classList.add('right');
+      if (i === wrongIdx) b.classList.add('wrong');
+    });
+  }
+
+  /* ---- 关 2：金工配对 ---- */
+  function renderMatchQ(body) {
+    const tasks = shuffle(MATCH_PAIRS.map((p, i) => ({ text: p.task, id: i })));
+    const tools = shuffle(MATCH_PAIRS.map((p, i) => ({ text: p.tool, id: i })));
+    body.innerHTML = `
+      <p class="q-prompt">点左边任务，再点右边工具，完成配对（剩余 <b id="match-left">6</b> 对）</p>
+      <div class="match-wrap panel">
+        <svg class="match-lines" id="match-lines"></svg>
+        <div class="match-cols">
+          <div class="match-col">${tasks.map(t => `<button class="match-item" data-side="task" data-id="${t.id}">${t.text}</button>`).join('')}</div>
+          <div class="match-col">${tools.map(t => `<button class="match-item" data-side="tool" data-id="${t.id}">${t.text}</button>`).join('')}</div>
+        </div>
+      </div>
+      <p class="order-hint">连对的线会保留；配错会断连击，但可以重试</p>`;
+    S.dots = new Array(6).fill(null);
+    let selTask = null, doneCount = 0;
+    const failed = new Set(); // 首次配错的对，重试成功不再计分
+    const wrap = body.querySelector('.match-wrap'), lines = $('#match-lines');
+
+    function drawLine(a, b) {
+      const wr = wrap.getBoundingClientRect(), ar = a.getBoundingClientRect(), br = b.getBoundingClientRect();
+      const x1 = ar.right - wr.left, y1 = ar.top + ar.height / 2 - wr.top;
+      const x2 = br.left - wr.left, y2 = br.top + br.height / 2 - wr.top;
+      const mx = (x1 + x2) / 2;
+      lines.appendChild(svgEl('path', { d: `M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}` }));
+    }
+
+    body.querySelectorAll('.match-item').forEach(btn => btn.addEventListener('click', () => {
+      if (btn.classList.contains('done')) return;
+      if (btn.dataset.side === 'task') {
+        body.querySelectorAll('.match-item.sel').forEach(x => x.classList.remove('sel'));
+        selTask = btn; btn.classList.add('sel');
+        return;
+      }
+      if (!selTask) { btn.classList.add('flash-bad'); setTimeout(() => btn.classList.remove('flash-bad'), 350); return; }
+      const pair = MATCH_PAIRS[btn.dataset.id];
+      const ok = selTask.dataset.id === btn.dataset.id;
+      if (ok) {
+        const firstTry = !failed.has(btn.dataset.id);
+        const gain = firstTry ? judge(true, null, doneCount) : 0;
+        selTask.classList.remove('sel'); selTask.classList.add('done'); btn.classList.add('done');
+        drawLine(selTask, btn);
+        doneCount++;
+        $('#match-left').textContent = 6 - doneCount;
+        updateHud();
+        showToast(true, '配对成功', gain, pair.tip, () => { S.lock = false; if (doneCount >= 6) levelResult(); });
+        S.lock = false; // 配对关判完不锁屏，继续配下一对（toast 仅提示）
+        selTask = null;
+      } else {
+        const taskText = selTask.textContent;
+        selTask.classList.remove('sel');
+        btn.classList.add('flash-bad'); setTimeout(() => btn.classList.remove('flash-bad'), 350);
+        selTask = null;
+        if (failed.has(btn.dataset.id)) {
+          S.combo = 0; updateHud(); // 重复错只断连击，不重复记错题
+          showToast(false, '又配错了', 0, pair.tip, () => { S.lock = false; });
+        } else {
+          failed.add(btn.dataset.id);
+          judge(false, { level: LEVELS[S.level].name, q: `「${pair.task}」应配哪种工具`, yours: `${taskText} → ${btn.textContent}`, right: `${pair.task} → ${pair.tool}`, tip: pair.tip }, doneCount);
+          showToast(false, '配错了', 0, pair.tip, () => { S.lock = false; });
+        }
+      }
+    }));
+  }
+
+  /* ---- 关 3：装配排序 ---- */
+  function renderOrderQ(body, q) {
+    const figSvg = q.q.fig === 'bolt'
+      ? `<svg viewBox="0 0 300 92">
+          <rect x="120" y="30" width="60" height="16" class="bp-fill"/>
+          <rect x="120" y="50" width="60" height="16" class="bp-fill"/>
+          <rect x="146" y="10" width="8" height="70" class="bp"/>
+          <rect x="136" y="2" width="28" height="12" class="bp-fill"/>
+          <line x1="150" y1="80" x2="150" y2="90" class="bp-dim"/>
+          <text x="240" y="42" fill="#9fc3e0" font-size="10" text-anchor="middle">被连接件</text>
+          <line x1="182" y1="38" x2="224" y2="38" class="bp-dim"/>
+        </svg>`
+      : `<svg viewBox="0 0 300 92">
+          <line x1="20" y1="46" x2="280" y2="46" class="bp"/>
+          <line x1="20" y1="38" x2="280" y2="38" class="bp-thin"/>
+          <line x1="20" y1="54" x2="280" y2="54" class="bp-thin"/>
+          <line x1="30" y1="30" x2="30" y2="62" class="bp"/>
+          <line x1="270" y1="30" x2="270" y2="62" class="bp"/>
+        </svg>`;
+    body.innerHTML = `
+      <p class="q-prompt">${q.q.title}（第 ${S.q + 1} / ${S.qs.length} 题）</p>
+      <div class="q-stage order-scene">${figSvg}</div>
+      <p class="dim center" style="font-size:13.5px">${q.q.scene}</p>
+      <div class="order-list" id="order-list"></div>
+      <p class="order-hint">点两枚卡片交换位置，或直接拖动排序</p>
+      <button class="btn primary" id="order-confirm">确认顺序</button>`;
+    const list = $('#order-list');
+    const dataOrder = [...q.order];
+    let selIdx = -1;
+
+    function paint() {
+      list.innerHTML = dataOrder.map((name, i) =>
+        `<div class="order-card${i === selIdx ? ' sel' : ''}" data-i="${i}"><span class="pos">${i + 1}</span><span>${name}</span></div>`).join('');
+    }
+    paint();
+
+    /* 拖拽 + 点击交换（统一 pointer 处理） */
+    let dragEl = null, dragStartY = 0, dragMoved = false, cardH = 0;
+    list.addEventListener('pointerdown', e => {
+      const card = e.target.closest('.order-card'); if (!card) return;
+      dragEl = card; dragStartY = e.clientY; dragMoved = false;
+      cardH = card.offsetHeight + 10;
+      card.setPointerCapture(e.pointerId);
+    });
+    list.addEventListener('pointermove', e => {
+      if (!dragEl) return;
+      const dy = e.clientY - dragStartY;
+      if (Math.abs(dy) > 8 && !dragMoved) { dragMoved = true; dragEl.classList.add('dragging'); }
+      if (dragMoved) dragEl.style.transform = `translateY(${dy}px)`;
+    });
+    list.addEventListener('pointerup', e => {
+      if (!dragEl) return;
+      const card = dragEl; dragEl = null;
+      if (dragMoved) {
+        const from = +card.dataset.i;
+        const to = Math.max(0, Math.min(dataOrder.length - 1, from + Math.round((e.clientY - dragStartY) / cardH)));
+        if (to !== from) { const [it] = dataOrder.splice(from, 1); dataOrder.splice(to, 0, it); }
+        selIdx = -1; paint();
+      } else {
+        const i = +card.dataset.i;
+        if (selIdx === -1) { selIdx = i; paint(); }
+        else if (selIdx === i) { selIdx = -1; paint(); }
+        else { [dataOrder[selIdx], dataOrder[i]] = [dataOrder[i], dataOrder[selIdx]]; selIdx = -1; paint(); }
+      }
+    });
+    list.addEventListener('pointercancel', () => { if (dragEl) { dragEl.classList.remove('dragging'); dragEl.style.transform = ''; dragEl = null; } });
+
+    $('#order-confirm').addEventListener('click', () => {
+      if (S.lock) return;
+      const ok = dataOrder.every((v, i) => v === q.q.correct[i]);
+      const gain = judge(ok, { level: LEVELS[S.level].name, q: q.q.title, yours: dataOrder.join(' → '), right: q.q.correct.join(' → '), tip: q.q.tip });
+      showToast(ok, ok ? '装配正确' : '顺序不对', gain, (ok ? '' : `正确顺序：${q.q.correct.join(' → ')}。`) + q.q.tip, nextQ);
+    });
+  }
+
+  /* ---- 关 4：机构猜猜看 ---- */
+  const MECH_DRAW = {
+    'slider-crank': {
+      setup(svg) {
+        const A = { x: 52, y: 64 }, r = 20, l = 62;
+        const g = {
+          A, crank: svgEl('line', { class: 'bp', 'stroke-width': 3 }),
+          rod: svgEl('line', { class: 'bp', 'stroke-width': 2.4 }),
+          slider: svgEl('rect', { width: 22, height: 18, y: 64 - 9, class: 'bp-fill' }),
+          pinB: svgEl('circle', { r: 3.4, class: 'bp-fill' }),
+        };
+        svg.appendChild(svgEl('line', { x1: 20, y1: 64, x2: 20, y2: 88, class: 'bp-dim' }));
+        svg.appendChild(svgEl('rect', { x: 128, y: 50, width: 60, height: 28, class: 'bp-dim' }));
+        for (let i = 0; i < 4; i++) svg.appendChild(svgEl('line', { x1: 132 + i * 14, y1: 78, x2: 138 + i * 14, y2: 84, class: 'bp-hatch' }));
+        svg.appendChild(svgEl('circle', { cx: A.x, cy: A.y, r, class: 'bp-dim' }));
+        svg.appendChild(g.crank); svg.appendChild(g.rod); svg.appendChild(g.slider); svg.appendChild(g.pinB);
+        svg.appendChild(svgEl('circle', { cx: A.x, cy: A.y, r: 3.6, class: 'bp-fill' }));
+        g.update = th => {
+          const B = { x: A.x + r * Math.cos(th), y: A.y + r * Math.sin(th) };
+          const Cx = B.x + Math.sqrt(Math.max(4, l * l - (B.y - 64) * (B.y - 64)));
+          g.crank.setAttribute('x1', A.x); g.crank.setAttribute('y1', A.y);
+          g.crank.setAttribute('x2', B.x); g.crank.setAttribute('y2', B.y);
+          g.rod.setAttribute('x1', B.x); g.rod.setAttribute('y1', B.y);
+          g.rod.setAttribute('x2', Cx); g.rod.setAttribute('y2', 64);
+          g.slider.setAttribute('x', Cx - 11);
+          g.pinB.setAttribute('cx', B.x); g.pinB.setAttribute('cy', B.y);
+        };
+        return g;
+      }
+    },
+    'crank-rocker': {
+      setup(svg) {
+        const A = { x: 42, y: 84 }, D = { x: 146, y: 84 }, r = 20, lBC = 76, lCD = 58;
+        const g = {
+          crank: svgEl('line', { class: 'bp', 'stroke-width': 3 }),
+          rod: svgEl('line', { class: 'bp', 'stroke-width': 2.4 }),
+          rocker: svgEl('line', { class: 'bp', 'stroke-width': 3 }),
+          pinC: svgEl('circle', { r: 3.2, class: 'bp-fill' }),
+        };
+        svg.appendChild(svgEl('line', { x1: A.x, y1: A.y, x2: D.x, y2: D.y, class: 'bp-dim' }));
+        for (let i = 0; i < 7; i++) svg.appendChild(svgEl('line', { x1: 48 + i * 15, y1: 88, x2: 54 + i * 15, y2: 94, class: 'bp-hatch' }));
+        svg.appendChild(svgEl('circle', { cx: A.x, cy: A.y, r, class: 'bp-dim' }));
+        svg.appendChild(g.crank); svg.appendChild(g.rod); svg.appendChild(g.rocker); svg.appendChild(g.pinC);
+        svg.appendChild(svgEl('circle', { cx: A.x, cy: A.y, r: 3.6, class: 'bp-fill' }));
+        svg.appendChild(svgEl('circle', { cx: D.x, cy: D.y, r: 3.6, class: 'bp-fill' }));
+        g.update = th => {
+          const B = { x: A.x + r * Math.cos(th), y: A.y + r * Math.sin(th) };
+          const dx = D.x - B.x, dy = D.y - B.y, d = Math.hypot(dx, dy);
+          const a = (lBC * lBC - lCD * lCD + d * d) / (2 * d);
+          const h = Math.sqrt(Math.max(0.01, lBC * lBC - a * a));
+          const mx = B.x + a * dx / d, my = B.y + a * dy / d;
+          /* 两圆两个交点，取 y 较小（机架上方）的一支，整周运动连续 */
+          let C = { x: mx - h * dy / d, y: my + h * dx / d };
+          const C2 = { x: mx + h * dy / d, y: my - h * dx / d };
+          if (C2.y < C.y) C = C2;
+          g.crank.setAttribute('x1', A.x); g.crank.setAttribute('y1', A.y);
+          g.crank.setAttribute('x2', B.x); g.crank.setAttribute('y2', B.y);
+          g.rod.setAttribute('x1', B.x); g.rod.setAttribute('y1', B.y);
+          g.rod.setAttribute('x2', C.x); g.rod.setAttribute('y2', C.y);
+          g.rocker.setAttribute('x1', D.x); g.rocker.setAttribute('y1', D.y);
+          g.rocker.setAttribute('x2', C.x); g.rocker.setAttribute('y2', C.y);
+          g.pinC.setAttribute('cx', C.x); g.pinC.setAttribute('cy', C.y);
+        };
+        return g;
+      }
+    },
+    'cam': {
+      setup(svg) {
+        const O = { x: 80, y: 78 }, R = 30, e = 11;
+        const disc = svgEl('g', {});
+        disc.appendChild(svgEl('circle', { cx: O.x + e, cy: O.y, r: R, class: 'bp-fill' }));
+        disc.appendChild(svgEl('line', { x1: O.x, y1: O.y, x2: O.x + e, y2: O.y, class: 'bp', 'stroke-width': 2 }));
+        const follower = svgEl('g', {});
+        follower.appendChild(svgEl('line', { x1: O.x, y1: O.y - R, x2: O.x, y2: 16, class: 'bp', 'stroke-width': 3 }));
+        follower.appendChild(svgEl('rect', { x: O.x - 24, y: O.y - R - 4, width: 48, height: 7, class: 'bp-fill' }));
+        const guide = svgEl('rect', { x: O.x - 7, y: 12, width: 14, height: 14, class: 'bp-dim' });
+        svg.appendChild(svgEl('line', { x1: 20, y1: 108, x2: 140, y2: 108, class: 'bp-dim' }));
+        for (let i = 0; i < 6; i++) svg.appendChild(svgEl('line', { x1: 28 + i * 20, y1: 108, x2: 34 + i * 20, y2: 114, class: 'bp-hatch' }));
+        svg.appendChild(disc); svg.appendChild(follower); svg.appendChild(guide);
+        svg.appendChild(svgEl('circle', { cx: O.x, cy: O.y, r: 3.6, class: 'bp-fill' }));
+        const g = {
+          update(th) {
+            disc.setAttribute('transform', `rotate(${th * 180 / Math.PI} ${O.x} ${O.y})`);
+            /* 平底从动件始终贴合凸轮最高轮廓点：y = O.y + e·sinθ − R，位移即 e·sinθ */
+            follower.setAttribute('transform', `translate(0 ${(e * Math.sin(th)).toFixed(2)})`);
+          }
+        };
+        return g;
+      }
+    },
+    'gear-pair': {
+      setup(svg) {
+        const m = 3.1, z1 = 12, z2 = 18;
+        const c1 = { x: 62, y: 60 }, dist = m * (z1 + z2) / 2;
+        const c2 = { x: c1.x + dist, y: 60 };
+        const g1wrap = svgEl('g', {}), g2wrap = svgEl('g', { transform: `rotate(${180 / z2} ${c2.x} ${c2.y})` });
+        const g1 = svgEl('g', { class: 'spin-a' }), g2 = svgEl('g', { class: 'spin-b' });
+        g1.appendChild(gearPath(c1.x, c1.y, z1, m));
+        g2.appendChild(gearPath(c2.x, c2.y, z2, m));
+        g1wrap.appendChild(g1); g2wrap.appendChild(g2);
+        svg.appendChild(g1wrap); svg.appendChild(g2wrap);
+        svg.appendChild(svgEl('circle', { cx: c1.x, cy: c1.y, r: 4, class: 'bp-fill' }));
+        svg.appendChild(svgEl('circle', { cx: c2.x, cy: c2.y, r: 5, class: 'bp-fill' }));
+        return { update() {} };
+      }
+    }
+  };
+
+  function renderMechQ(body, q) {
+    body.innerHTML = `
+      <p class="q-prompt">台架上运动的是哪种机构？（第 ${S.q + 1} / ${S.qs.length} 题）</p>
+      <div class="q-stage"><svg viewBox="0 0 200 120" class="wide" id="mech-svg"></svg></div>
+      <div class="opts">${q.opts.map(o => `<button class="opt">${o}</button>`).join('')}</div>`;
+    const svg = $('#mech-svg');
+    const mech = MECH_DRAW[q.mech.id].setup(svg);
+    let th = 0, last = performance.now();
+    const loop = now => {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      th += dt * 1.7;
+      mech.update(th);
+      S.raf = requestAnimationFrame(loop);
+    };
+    S.raf = requestAnimationFrame(loop);
+    body.querySelectorAll('.opt').forEach(btn => btn.addEventListener('click', () => {
+      if (S.lock) return;
+      stopRaf();
+      const pick = btn.textContent;
+      const ok = pick === q.mech.name;
+      const gain = judge(ok, { level: LEVELS[S.level].name, q: '识别台架上的运动机构', yours: pick, right: q.mech.name, tip: q.mech.tip });
+      markOptions(q.opts, q.mech.name, ok ? -1 : [...body.querySelectorAll('.opt')].indexOf(btn));
+      showToast(ok, ok ? '答对了' : '答错了', gain, (ok ? '' : `正确答案：${q.mech.name}。`) + q.mech.tip, nextQ);
+    }));
+  }
+
+  /* ---- 关 5：配合判断 ---- */
+  function renderFitQ(body, q) {
+    body.innerHTML = `
+      <p class="q-prompt">这个场景应选哪种配合？（第 ${S.q + 1} / ${S.qs.length} 题）</p>
+      <div class="panel" style="font-size:15px;line-height:1.8">${q.q.scene}</div>
+      <div class="opts cols3">${q.opts.map(o => `<button class="opt">${o}</button>`).join('')}</div>`;
+    body.querySelectorAll('.opt').forEach(btn => btn.addEventListener('click', () => {
+      if (S.lock) return;
+      const pick = btn.textContent;
+      const ok = pick === q.q.answer;
+      const gain = judge(ok, { level: LEVELS[S.level].name, q: q.q.scene, yours: pick, right: q.q.answer, tip: q.q.tip });
+      markOptions(q.opts, q.q.answer, ok ? -1 : [...body.querySelectorAll('.opt')].indexOf(btn));
+      showToast(ok, ok ? '选对了' : '选错了', gain, (ok ? '' : `应选：${q.q.answer}。`) + q.q.tip, nextQ);
+    }));
+  }
+
+  /* ============================================================
+   * 屏幕渲染与事件绑定
+   * ============================================================ */
+  function renderTitle() {
+    $('#title-best').textContent = S.best > 0 ? `历史最佳：${S.best} 分 · ${rankOf(S.best)}` : '等你来拿下第一个称号';
+  }
+
+  function renderMap() {
+    const list = $('#map-list');
+    list.innerHTML = '';
+    LEVELS.forEach((l, i) => {
+      const locked = i >= S.unlocked;
+      const done = (S.levelBest[i] || 0) > 0;
+      const node = document.createElement('button');
+      node.className = 'map-node' + (locked ? ' locked' : '') + (done ? ' done' : '');
+      node.innerHTML = `
+        <span class="map-badge">${locked ? '—' : i + 1}</span>
+        <span class="map-info"><span class="map-name">${l.name}</span><br><span class="map-desc">${l.brief}</span></span>
+        <span class="map-state">${done ? S.levelBest[i] + ' 分' : (locked ? '未解锁' : '可挑战')}</span>`;
+      if (!locked) node.addEventListener('click', () => showIntro(i));
+      list.appendChild(node);
+    });
+  }
+
+  function showIntro(i) {
+    S.level = i;
+    $('#intro-kicker').textContent = `第 ${'一二三四五'[i]} 关`;
+    $('#intro-name').textContent = LEVELS[i].name;
+    $('#intro-list').innerHTML = LEVELS[i].intro.map(t => `<li>${t}</li>`).join('');
+    go('intro');
+  }
+
+  function renderReview() {
+    const list = $('#review-list');
+    if (!S.wrongs.length) {
+      list.innerHTML = `<div class="panel empty-note">本轮零失误，全是满分操作！<br>试试冲击更高连击吧。</div>`;
+    } else {
+      list.innerHTML = S.wrongs.map(w => `
+        <div class="panel review-card">
+          <span class="review-lv">${w.level}</span>
+          <div class="rq">${w.q}</div>
+          <div class="ra">你的答案：<span class="yours">${w.yours}</span>　正确答案：<span class="right">${w.right}</span></div>
+          <div class="rt">${w.tip}</div>
+        </div>`).join('');
+    }
+  }
+
+  /* ---- 全局事件 ---- */
+  $('#btn-start').addEventListener('click', () => { renderMap(); go('map'); });
+  $('#btn-map-back').addEventListener('click', () => { renderTitle(); go('title'); });
+  $('#btn-intro-back').addEventListener('click', () => { renderMap(); go('map'); });
+  $('#btn-intro-go').addEventListener('click', () => startLevel(S.level));
+  $('#hud-back').addEventListener('click', () => { renderMap(); go('map'); });
+  $('#btn-result-map').addEventListener('click', () => { renderMap(); go('map'); });
+  $('#btn-result-next').addEventListener('click', () => {
+    if (S.level >= 4) showFinal();
+    else showIntro(S.level + 1);
+  });
+  $('#btn-final-review').addEventListener('click', () => { renderReview(); go('review'); });
+  $('#btn-final-again').addEventListener('click', () => {
+    S.score = 0; S.combo = 0; S.maxCombo = 0; S.wrongs = [];
+    renderMap(); go('map');
+  });
+  $('#btn-final-home').addEventListener('click', () => { renderTitle(); go('title'); });
+  $('#btn-review-back').addEventListener('click', showFinal);
+
+  /* ---- 启动 ---- */
+  load();
+  renderTitle();
+  go('title');
+  </script>
+  <!-- Cloudflare Web Analytics --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "7f217925546646b2ac70e0e1ef877263"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+
+</html>
