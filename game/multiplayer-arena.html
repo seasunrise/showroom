@@ -520,6 +520,8 @@
         let lastSync = 0;
         let connected = false;
         let gameRunning = false;
+        let networkLatency = 0;
+        let pingTimer = null;
 
         // ============================================================
         //  SUPABASE — 嵌入配置，分享给同学无需再输入
@@ -555,6 +557,7 @@
 
             channel = sbClient.channel(channelName, {
                 config: {
+                    broadcast: { self: true },
                     presence: { key: me.id }
                 }
             });
@@ -624,6 +627,7 @@
             });
 
             channel.on('broadcast', { event: 'kill' }, ({ payload }) => {
+                if (payload.victimId === me.id) return; // victim already handled death in die()
                 showToast(`${payload.killerName} 击杀了 ${payload.victimName}!`);
                 spawnExplosion(payload.x, payload.y, payload.color);
                 if (payload.killerId === me.id) {
@@ -635,21 +639,52 @@
                 updateHUD();
             });
 
+            // Broadcast: ping echo for latency measurement
+            channel.on('broadcast', { event: 'ping' }, ({ payload }) => {
+                if (payload.id !== me.id) return;
+                const rtt = performance.now() - payload.ts;
+                networkLatency = Math.round(rtt);
+                updateConnStatus();
+            });
+
             channel.subscribe(async (status) => {
                 if (status === 'SUBSCRIBED') {
                     connected = true;
-                    document.getElementById('conn-status').textContent = '在线 ONLINE';
-                    document.getElementById('conn-status').style.color = 'var(--green)';
                     respawn();
                     // Single presence track for join/leave detection only (no state data)
                     try { await channel.track({ name: me.name }); } catch (e) {}
                     startGame();
+                    // Start latency pings
+                    sendPing();
+                    pingTimer = setInterval(sendPing, 3000);
                 } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
                     connected = false;
-                    document.getElementById('conn-status').textContent = '断开 DISCONNECTED';
-                    document.getElementById('conn-status').style.color = 'var(--red)';
+                    if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+                    networkLatency = 0;
                 }
+                updateConnStatus();
             });
+        }
+
+        function sendPing() {
+            if (!channel || !connected) return;
+            channel.send({
+                type: 'broadcast',
+                event: 'ping',
+                payload: { id: me.id, ts: performance.now() }
+            });
+        }
+
+        function updateConnStatus() {
+            const el = document.getElementById('conn-status');
+            if (connected) {
+                const latencyText = networkLatency > 0 ? ` · ${networkLatency}ms` : '';
+                el.textContent = `在线 ONLINE${latencyText}`;
+                el.style.color = 'var(--green)';
+            } else {
+                el.textContent = '断开 DISCONNECTED';
+                el.style.color = 'var(--red)';
+            }
         }
 
         // Use Broadcast for player state (Presence track has a 5-call limit with sb_publishable_ keys)
@@ -1227,6 +1262,7 @@
         }
 
         window.addEventListener('beforeunload', () => {
+            if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
             if (channel) {
                 // Notify others we're leaving before unsubscribing
                 channel.send({
