@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>宿舍大乱斗 · Dorm Brawl Online</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #0f1220;
+            --bg2: #1a1e35;
+            --ink: #e5e7eb;
+            --muted: #8b92a8;
+            --accent: #4f6df5;
+            --accent2: #22b8a6;
+            --red: #ef4444;
+            --green: #22c55e;
+            --yellow: #f59e0b;
+            --font: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+            --mono: ui-monospace, "SF Mono", "JetBrains Mono", monospace;
+        }
+
+        html,
+        body {
+            height: 100%;
+            height: 100dvh;
+        }
+
+        body {
+            font-family: var(--font);
+            color: var(--ink);
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        #stage {
+            position: relative;
+            width: min(96vw, 96dvh * 1.333, 960px);
+            aspect-ratio: 4 / 3;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .5);
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: #161a2e;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 20;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 10px 14px;
+            pointer-events: none;
+            font-family: var(--mono);
+        }
+
+        .hud-box {
+            font-size: clamp(11px, 1.8vmin, 14px);
+            line-height: 1.5;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, .8);
+        }
+
+        .hud-left {
+            color: var(--ink);
+        }
+
+        .hud-mid {
+            color: var(--accent2);
+            text-align: center;
+        }
+
+        .hud-right {
+            color: var(--accent);
+            text-align: right;
+        }
+
+        .health-bar {
+            width: clamp(80px, 18vmin, 130px);
+            height: 8px;
+            background: rgba(0, 0, 0, .5);
+            border: 1px solid rgba(255, 255, 255, .15);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: var(--green);
+            transition: width .15s;
+        }
+
+        /* Scoreboard */
+        .scoreboard {
+            position: absolute;
+            right: 10px;
+            top: 70px;
+            z-index: 20;
+            background: rgba(15, 18, 32, .8);
+            border: 1px solid rgba(79, 109, 245, .25);
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-family: var(--mono);
+            font-size: clamp(10px, 1.6vmin, 12px);
+            min-width: 130px;
+            pointer-events: none;
+            display: none;
+        }
+
+        .scoreboard-title {
+            color: var(--accent);
+            font-size: 10px;
+            letter-spacing: .15em;
+            margin-bottom: 4px;
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 2px 0;
+            color: var(--ink);
+        }
+
+        .score-row.me {
+            color: var(--accent2);
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(600px 300px at 30% 20%, rgba(79, 109, 245, .15), transparent),
+                radial-gradient(500px 300px at 70% 80%, rgba(34, 184, 166, .12), transparent),
+                rgba(15, 18, 32, .92);
+            backdrop-filter: blur(8px);
+        }
+
+        .overlay.hidden {
+            display: none;
+        }
+
+        .join-card {
+            background: rgba(26, 30, 53, .9);
+            border: 1px solid rgba(79, 109, 245, .25);
+            border-radius: 16px;
+            padding: clamp(20px, 4vmin, 36px) clamp(24px, 5vmin, 44px);
+            width: min(360px, 90vw);
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, .4);
+        }
+
+        .join-card h1 {
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(120deg, var(--accent), var(--accent2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: .2rem;
+        }
+
+        .join-card .subtitle {
+            font-family: var(--mono);
+            font-size: .72rem;
+            color: var(--muted);
+            letter-spacing: 3px;
+            margin-bottom: 1.4rem;
+        }
+
+        .join-card input {
+            width: 100%;
+            padding: .7rem 1rem;
+            margin-bottom: .7rem;
+            background: rgba(15, 18, 32, .8);
+            border: 1px solid rgba(79, 109, 245, .2);
+            border-radius: 10px;
+            color: var(--ink);
+            font-family: var(--font);
+            font-size: .95rem;
+            outline: none;
+            transition: border .15s;
+        }
+
+        .join-card input:focus {
+            border-color: var(--accent);
+        }
+
+        .join-card input::placeholder {
+            color: var(--muted);
+        }
+
+        .join-card button {
+            width: 100%;
+            padding: .75rem;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: var(--font);
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            box-shadow: 0 6px 20px rgba(79, 109, 245, .3);
+            transition: transform .12s, box-shadow .12s;
+        }
+
+        .join-card button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 26px rgba(79, 109, 245, .4);
+        }
+
+        .status {
+            font-size: .8rem;
+            color: var(--muted);
+            margin-top: 12px;
+            min-height: 20px;
+        }
+
+        .status.err {
+            color: var(--red);
+        }
+
+        .status.ok {
+            color: var(--green);
+        }
+
+        .hint {
+            font-size: .7rem;
+            color: var(--muted);
+            margin-top: 14px;
+            line-height: 1.6;
+        }
+
+        /* Toast */
+        #toast {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 60;
+            background: rgba(15, 18, 32, .92);
+            border: 1px solid var(--yellow);
+            color: var(--yellow);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            opacity: 0;
+            transition: opacity .3s;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        #toast.show {
+            opacity: 1;
+        }
+
+        /* Crosshair */
+        #crosshair {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            pointer-events: none;
+            z-index: 15;
+            display: none;
+            transform: translate(-50%, -50%);
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: "";
+            position: absolute;
+            background: rgba(255, 255, 255, .6);
+        }
+
+        #crosshair::before {
+            left: 50%;
+            top: 0;
+            width: 2px;
+            height: 100%;
+            transform: translateX(-50%);
+        }
+
+        #crosshair::after {
+            top: 50%;
+            left: 0;
+            height: 2px;
+            width: 100%;
+            transform: translateY(-50%);
+        }
+
+        /* Touch controls */
+        #touch-controls {
+            position: absolute;
+            inset: 0;
+            z-index: 18;
+            pointer-events: none;
+            display: none;
+        }
+
+        #touch-controls.active {
+            display: block;
+        }
+
+        #stick {
+            position: absolute;
+            left: 20px;
+            bottom: 30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(79, 109, 245, .12);
+            border: 2px solid rgba(79, 109, 245, .3);
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        #knob {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(79, 109, 245, .4);
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        #fire-btn {
+            position: absolute;
+            right: 30px;
+            bottom: 40px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, .25);
+            border: 2px solid rgba(239, 68, 68, .4);
+            pointer-events: auto;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="stage">
+        <canvas id="game"></canvas>
+
+        <div id="hud">
+            <div class="hud-box hud-left">
+                <div>HP</div>
+                <div class="health-bar">
+                    <div class="health-fill" id="health-fill" style="width:100%"></div>
+                </div>
+                <div style="margin-top:4px">SCORE <span id="my-score">0</span></div>
+            </div>
+            <div class="hud-box hud-mid">
+                <div id="conn-status" style="color:var(--muted)">connecting...</div>
+            </div>
+            <div class="hud-box hud-right">
+                <div>PLAYERS <span id="player-count">1</span></div>
+            </div>
+        </div>
+
+        <div class="scoreboard" id="scoreboard">
+            <div class="scoreboard-title">LEADERBOARD</div>
+            <div id="score-list"></div>
+        </div>
+
+        <div id="crosshair"></div>
+
+        <div id="touch-controls">
+            <div id="stick">
+                <div id="knob"></div>
+            </div>
+            <div id="fire-btn"></div>
+        </div>
+
+        <div id="toast"></div>
+
+        <div class="overlay" id="join-overlay">
+            <div class="join-card">
+                <h1>宿舍大乱斗</h1>
+                <div class="subtitle">DORM BRAWL · ONLINE</div>
+                <input type="text" id="player-name" maxlength="12" placeholder="输入你的昵称">
+                <button id="join-btn">进入宿舍 ENTER</button>
+                <div class="status" id="join-status"></div>
+                <div class="hint">
+                    WASD / 方向键 移动<br>
+                    鼠标瞄准 · 左键 / 空格 射击<br>
+                    所有玩家自动进入同一间宿舍
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  CONFIG & CONSTANTS
+        // ============================================================
+        const WORLD_W = 800;
+        const WORLD_H = 600;
+        const PLAYER_RADIUS = 16;
+        const PLAYER_SPEED = 220;
+        const BULLET_SPEED = 520;
+        const BULLET_RADIUS = 5;
+        const FIRE_COOLDOWN = 0.32;
+        const MAX_HEALTH = 100;
+        const BULLET_DAMAGE = 18;
+        const RESPAWN_TIME = 2.5;
+        const SYNC_INTERVAL = 100;
+        const HEARTBEAT_TIMEOUT = 3000;
+        const INTERP_LERP = 0.2;
+
+        const COLORS = [
+            '#ef4444', '#3b82f6', '#22c55e', '#f59e0b',
+            '#a855f7', '#06b6d4', '#ec4899', '#84cc16',
+            '#f97316', '#6366f1'
+        ];
+
+        // 宿舍家具障碍物 [x, y, w, h]
+        const OBSTACLES = [
+            [100, 90, 110, 45],
+            [590, 90, 110, 45],
+            [100, 465, 110, 45],
+            [590, 465, 110, 45],
+            [340, 260, 120, 70],
+            [380, 180, 40, 40],
+            [380, 370, 40, 40],
+            [260, 275, 40, 40],
+            [500, 275, 40, 40],
+        ];
+        const OBSTACLE_LABELS = ['床', '床', '床', '床', '桌', '椅', '椅', '椅', '椅'];
+
+        // 出生点
+        const SPAWNS = [
+            [50, 50], [750, 50], [50, 550], [750, 550],
+            [400, 50], [400, 550], [50, 300], [750, 300],
+        ];
+
+        // ============================================================
+        //  STATE
+        // ============================================================
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        let W = 0, H = 0, DPR = 1, scaleX = 1, scaleY = 1;
+
+        function resize() {
+            DPR = Math.min(window.devicePixelRatio || 1, 2);
+            const rect = canvas.getBoundingClientRect();
+            W = rect.width;
+            H = rect.height;
+            canvas.width = Math.round(W * DPR);
+            canvas.height = Math.round(H * DPR);
+            // world units -> device pixels (must include DPR, else content only fills 1/DPR of canvas)
+            scaleX = (W * DPR) / WORLD_W;
+            scaleY = (H * DPR) / WORLD_H;
+        }
+        window.addEventListener('resize', resize);
+
+        const me = {
+            id: 'p_' + Math.random().toString(36).slice(2, 10),
+            name: 'Player',
+            color: COLORS[Math.floor(Math.random() * COLORS.length)],
+            x: 0, y: 0,
+            angle: 0,
+            health: MAX_HEALTH,
+            score: 0,
+            alive: true,
+            lastFire: 0,
+            respawnAt: 0,
+            spawnIdx: 0
+        };
+
+        const remotePlayers = new Map();
+        const bullets = [];
+        const particles = [];
+
+        const keys = {};
+        const mouse = { x: WORLD_W / 2, y: WORLD_H / 2, down: false };
+
+        let sbClient = null;
+        let channel = null;
+        let lastSync = 0;
+        let connected = false;
+        let gameRunning = false;
+
+        // ============================================================
+        //  SUPABASE — 嵌入配置，分享给同学无需再输入
+        // ============================================================
+        const EMBEDDED_SUPABASE_CONFIG = {
+            url: 'https://gxdackbnfxbaqcpabcgs.supabase.co',
+            key: 'sb_publishable_7zuwaGboS5j-3Mq6Q0l8vw_VKkJLql2'
+        };
+
+        function loadSbConfig() {
+            return {
+                url: localStorage.getItem('sb_url') || EMBEDDED_SUPABASE_CONFIG.url,
+                key: localStorage.getItem('sb_key') || EMBEDDED_SUPABASE_CONFIG.key
+            };
+        }
+
+        function initSupabase() {
+            const cfg = loadSbConfig();
+            if (!cfg.url || !cfg.key || cfg.key === 'PASTE_YOUR_PUBLISHABLE_KEY_HERE') return false;
+            try {
+                sbClient = window.supabase.createClient(cfg.url, cfg.key, {
+                    realtime: { params: { eventsPerSecond: 10 } }
+                });
+                return true;
+            } catch (e) {
+                console.error('Supabase init error:', e);
+                return false;
+            }
+        }
+
+        function joinDorm() {
+            const channelName = 'dorm_brawl_v1';
+
+            channel = sbClient.channel(channelName, {
+                config: {
+                    presence: { key: me.id }
+                }
+            });
+
+            // Presence: only for join/leave detection (single track call on join)
+            channel.on('presence', { event: 'leave' }, ({ key }) => {
+                if (remotePlayers.has(key)) {
+                    const rp = remotePlayers.get(key);
+                    showToast(`${rp.name} 离开了`);
+                    remotePlayers.delete(key);
+                    updateScoreboard();
+                    updateHUD();
+                }
+            });
+
+            // Broadcast: player state updates (position, angle, health, score, alive)
+            channel.on('broadcast', { event: 'state' }, ({ payload }) => {
+                if (payload.id === me.id) return;
+                const pid = payload.id;
+                if (!remotePlayers.has(pid)) {
+                    remotePlayers.set(pid, {
+                        id: pid, name: payload.name, color: payload.color,
+                        x: payload.x, y: payload.y, angle: payload.angle,
+                        targetX: payload.x, targetY: payload.y, targetAngle: payload.angle,
+                        health: payload.health, score: payload.score, alive: payload.alive,
+                        lastSeen: performance.now()
+                    });
+                    showToast(`${payload.name} 进入宿舍`);
+                } else {
+                    const rp = remotePlayers.get(pid);
+                    rp.name = payload.name;
+                    rp.color = payload.color;
+                    rp.targetX = payload.x;
+                    rp.targetY = payload.y;
+                    rp.targetAngle = payload.angle;
+                    rp.health = payload.health;
+                    rp.score = payload.score;
+                    rp.alive = payload.alive;
+                    rp.lastSeen = performance.now();
+                }
+            });
+
+            // Broadcast: leave notification
+            channel.on('broadcast', { event: 'leave' }, ({ payload }) => {
+                if (remotePlayers.has(payload.id)) {
+                    const rp = remotePlayers.get(payload.id);
+                    showToast(`${rp.name} 离开了`);
+                    remotePlayers.delete(payload.id);
+                    updateScoreboard();
+                    updateHUD();
+                }
+            });
+
+            channel.on('broadcast', { event: 'shoot' }, ({ payload }) => {
+                if (payload.ownerId === me.id) return;
+                spawnBullet(payload.x, payload.y, payload.angle, payload.ownerId, payload.ownerColor, false);
+            });
+
+            channel.on('broadcast', { event: 'hit' }, ({ payload }) => {
+                if (payload.targetId === me.id) {
+                    me.health = Math.max(0, me.health - BULLET_DAMAGE);
+                    spawnHitParticles(me.x, me.y, '#ff4444');
+                    if (me.health <= 0 && me.alive) {
+                        die(payload.shooterId, payload.shooterName);
+                    }
+                }
+            });
+
+            channel.on('broadcast', { event: 'kill' }, ({ payload }) => {
+                showToast(`${payload.killerName} 击杀了 ${payload.victimName}!`);
+                spawnExplosion(payload.x, payload.y, payload.color);
+                if (payload.killerId === me.id) {
+                    me.score += 1;
+                } else if (remotePlayers.has(payload.killerId)) {
+                    remotePlayers.get(payload.killerId).score += 1;
+                }
+                updateScoreboard();
+                updateHUD();
+            });
+
+            channel.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    connected = true;
+                    document.getElementById('conn-status').textContent = '在线 ONLINE';
+                    document.getElementById('conn-status').style.color = 'var(--green)';
+                    respawn();
+                    // Single presence track for join/leave detection only (no state data)
+                    try { await channel.track({ name: me.name }); } catch (e) {}
+                    startGame();
+                } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+                    connected = false;
+                    document.getElementById('conn-status').textContent = '断开 DISCONNECTED';
+                    document.getElementById('conn-status').style.color = 'var(--red)';
+                }
+            });
+        }
+
+        // Use Broadcast for player state (Presence track has a 5-call limit with sb_publishable_ keys)
+        function broadcastState() {
+            if (!channel || !connected) return;
+            channel.send({
+                type: 'broadcast',
+                event: 'state',
+                payload: {
+                    id: me.id,
+                    name: me.name,
+                    color: me.color,
+                    x: Math.round(me.x),
+                    y: Math.round(me.y),
+                    angle: +me.angle.toFixed(3),
+                    health: me.health,
+                    score: me.score,
+                    alive: me.alive
+                }
+            });
+        }
+
+        function broadcastShoot(x, y, angle) {
+            if (!channel) return;
+            channel.send({
+                type: 'broadcast', event: 'shoot',
+                payload: { x, y, angle, ownerId: me.id, ownerColor: me.color }
+            });
+        }
+
+        function broadcastHit(shooterId, targetId, shooterName) {
+            if (!channel) return;
+            channel.send({
+                type: 'broadcast', event: 'hit',
+                payload: { shooterId, targetId, shooterName }
+            });
+        }
+
+        function broadcastKill(killerId, victimId, killerName, victimName, x, y, color) {
+            if (!channel) return;
+            channel.send({
+                type: 'broadcast', event: 'kill',
+                payload: { killerId, victimId, killerName, victimName, x, y, color }
+            });
+        }
+
+        // ============================================================
+        //  COLLISION HELPERS
+        // ============================================================
+        function circleRectCollide(cx, cy, r, rx, ry, rw, rh) {
+            const closestX = Math.max(rx, Math.min(cx, rx + rw));
+            const closestY = Math.max(ry, Math.min(cy, ry + rh));
+            const dx = cx - closestX;
+            const dy = cy - closestY;
+            return (dx * dx + dy * dy) < (r * r);
+        }
+
+        function collidesWithObstacle(x, y, r) {
+            for (const o of OBSTACLES) {
+                if (circleRectCollide(x, y, r, o[0], o[1], o[2], o[3])) return true;
+            }
+            return false;
+        }
+
+        // ============================================================
+        //  GAME LOGIC
+        // ============================================================
+        function respawn() {
+            me.alive = true;
+            me.health = MAX_HEALTH;
+            const sp = SPAWNS[me.spawnIdx % SPAWNS.length];
+            me.spawnIdx++;
+            me.x = sp[0];
+            me.y = sp[1];
+        }
+
+        function spawnBullet(x, y, angle, ownerId, ownerColor, isLocal) {
+            bullets.push({
+                x: x + Math.cos(angle) * (PLAYER_RADIUS + 4),
+                y: y + Math.sin(angle) * (PLAYER_RADIUS + 4),
+                vx: Math.cos(angle) * BULLET_SPEED,
+                vy: Math.sin(angle) * BULLET_SPEED,
+                ownerId, ownerColor,
+                life: 1.5,
+                isLocal
+            });
+        }
+
+        function fire() {
+            const now = performance.now() / 1000;
+            if (!me.alive) return;
+            if (now - me.lastFire < FIRE_COOLDOWN) return;
+            me.lastFire = now;
+            spawnBullet(me.x, me.y, me.angle, me.id, me.color, true);
+            broadcastShoot(me.x, me.y, me.angle);
+        }
+
+        function die(killerId, killerName) {
+            me.alive = false;
+            me.respawnAt = performance.now() / 1000 + RESPAWN_TIME;
+            broadcastKill(killerId, me.id, killerName || 'Someone', me.name, me.x, me.y, me.color);
+            spawnExplosion(me.x, me.y, me.color);
+            showToast(killerName ? `被 ${killerName} 击杀!` : '你阵亡了!');
+        }
+
+        function spawnHitParticles(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                const a = Math.random() * Math.PI * 2;
+                const s = 60 + Math.random() * 140;
+                particles.push({
+                    x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+                    life: 0.4 + Math.random() * 0.3, color, size: 2 + Math.random() * 3
+                });
+            }
+        }
+
+        function spawnExplosion(x, y, color) {
+            for (let i = 0; i < 28; i++) {
+                const a = Math.random() * Math.PI * 2;
+                const s = 50 + Math.random() * 260;
+                particles.push({
+                    x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s,
+                    life: 0.6 + Math.random() * 0.6, color, size: 3 + Math.random() * 5
+                });
+            }
+        }
+
+        function updateLocalPlayer(dt) {
+            if (!me.alive) {
+                if (performance.now() / 1000 >= me.respawnAt) respawn();
+                return;
+            }
+
+            let dx = 0, dy = 0;
+            if (keys['w'] || keys['arrowup']) dy -= 1;
+            if (keys['s'] || keys['arrowdown']) dy += 1;
+            if (keys['a'] || keys['arrowleft']) dx -= 1;
+            if (keys['d'] || keys['arrowright']) dx += 1;
+            const len = Math.hypot(dx, dy);
+            if (len > 0) { dx /= len; dy /= len; }
+
+            const nx = me.x + dx * PLAYER_SPEED * dt;
+            const ny = me.y + dy * PLAYER_SPEED * dt;
+
+            // Move X then Y separately for sliding along walls
+            if (!collidesWithObstacle(nx, me.y, PLAYER_RADIUS)) {
+                me.x = nx;
+            }
+            if (!collidesWithObstacle(me.x, ny, PLAYER_RADIUS)) {
+                me.y = ny;
+            }
+
+            // World bounds
+            me.x = Math.max(PLAYER_RADIUS, Math.min(WORLD_W - PLAYER_RADIUS, me.x));
+            me.y = Math.max(PLAYER_RADIUS, Math.min(WORLD_H - PLAYER_RADIUS, me.y));
+
+            me.angle = Math.atan2(mouse.y - me.y, mouse.x - me.x);
+
+            if (mouse.down) fire();
+        }
+
+        function updateRemotePlayers(dt) {
+            const now = performance.now();
+            for (const [pid, rp] of remotePlayers) {
+                // Heartbeat: remove players that stopped broadcasting
+                if (now - rp.lastSeen > HEARTBEAT_TIMEOUT) {
+                    showToast(`${rp.name} 离开了`);
+                    remotePlayers.delete(pid);
+                    updateScoreboard();
+                    updateHUD();
+                    continue;
+                }
+                if (rp.targetX !== undefined) {
+                    rp.x += (rp.targetX - rp.x) * INTERP_LERP;
+                    rp.y += (rp.targetY - rp.y) * INTERP_LERP;
+                    rp.angle = rp.targetAngle ?? rp.angle;
+                }
+            }
+        }
+
+        function updateBullets(dt) {
+            for (let i = bullets.length - 1; i >= 0; i--) {
+                const b = bullets[i];
+                b.x += b.vx * dt;
+                b.y += b.vy * dt;
+                b.life -= dt;
+
+                // Out of bounds
+                if (b.life <= 0 || b.x < 0 || b.x > WORLD_W || b.y < 0 || b.y > WORLD_H) {
+                    bullets.splice(i, 1);
+                    continue;
+                }
+
+                // Bullet hits obstacle
+                if (collidesWithObstacle(b.x, b.y, BULLET_RADIUS)) {
+                    spawnHitParticles(b.x, b.y, '#888');
+                    bullets.splice(i, 1);
+                    continue;
+                }
+
+                // Local bullet vs remote players
+                if (b.isLocal && b.ownerId === me.id) {
+                    let hit = false;
+                    for (const [pid, rp] of remotePlayers) {
+                        if (!rp.alive) continue;
+                        const d = Math.hypot(b.x - rp.x, b.y - rp.y);
+                        if (d < PLAYER_RADIUS + BULLET_RADIUS) {
+                            broadcastHit(me.id, pid, me.name);
+                            spawnHitParticles(b.x, b.y, rp.color);
+                            hit = true;
+                            break;
+                        }
+                    }
+                    if (hit) { bullets.splice(i, 1); continue; }
+                }
+
+                // Remote bullet vs local player
+                if (!b.isLocal && me.alive) {
+                    const d = Math.hypot(b.x - me.x, b.y - me.y);
+                    if (d < PLAYER_RADIUS + BULLET_RADIUS) {
+                        const owner = remotePlayers.get(b.ownerId);
+                        const ownerName = owner ? owner.name : 'Someone';
+                        me.health = Math.max(0, me.health - BULLET_DAMAGE);
+                        spawnHitParticles(me.x, me.y, '#ff4444');
+                        bullets.splice(i, 1);
+                        if (me.health <= 0) die(b.ownerId, ownerName);
+                    }
+                }
+            }
+        }
+
+        function updateParticles(dt) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * dt;
+                p.y += p.vy * dt;
+                p.vx *= 0.92;
+                p.vy *= 0.92;
+                p.life -= dt;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        // ============================================================
+        //  RENDERING
+        // ============================================================
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.scale(scaleX, scaleY);
+
+            // Background
+            ctx.fillStyle = '#161a2e';
+            ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+
+            // Floor tiles
+            ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= WORLD_W; x += 40) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, WORLD_H); ctx.stroke();
+            }
+            for (let y = 0; y <= WORLD_H; y += 40) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(WORLD_W, y); ctx.stroke();
+            }
+
+            // Walls
+            ctx.strokeStyle = 'rgba(79,109,245,0.25)';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(1.5, 1.5, WORLD_W - 3, WORLD_H - 3);
+
+            drawObstacles();
+            drawBullets();
+            drawParticles();
+
+            // Remote players
+            for (const [pid, rp] of remotePlayers) {
+                drawPlayer(rp, false);
+            }
+            drawPlayer(me, true);
+
+            drawRespawnTimer();
+
+            ctx.restore();
+        }
+
+        function drawObstacles() {
+            for (let i = 0; i < OBSTACLES.length; i++) {
+                const o = OBSTACLES[i];
+                const isBed = i < 4;
+                const isDesk = i === 4;
+                ctx.fillStyle = isDesk ? '#5a4632' : isBed ? '#3d3225' : '#2a2418';
+                ctx.fillRect(o[0], o[1], o[2], o[3]);
+                ctx.strokeStyle = isDesk ? '#7a6242' : isBed ? '#5a4a35' : '#3a3020';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(o[0], o[1], o[2], o[3]);
+                // Label
+                ctx.fillStyle = 'rgba(255,255,255,0.18)';
+                ctx.font = '12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(OBSTACLE_LABELS[i], o[0] + o[2] / 2, o[1] + o[3] / 2);
+            }
+        }
+
+        function drawPlayer(p, isMe) {
+            ctx.save();
+            ctx.globalAlpha = p.alive ? 1 : 0.25;
+
+            // Self highlight
+            if (isMe && p.alive) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, PLAYER_RADIUS + 3, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Body
+            ctx.fillStyle = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, PLAYER_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eyes looking at angle
+            const ex = Math.cos(p.angle) * 5;
+            const ey = Math.sin(p.angle) * 5;
+            ctx.fillStyle = '#fff';
+            ctx.beginPath(); ctx.arc(p.x + ex - 4, p.y + ey - 2, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x + ex + 4, p.y + ey - 2, 3, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(p.x + ex - 4, p.y + ey - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(p.x + ex + 4, p.y + ey - 2, 1.5, 0, Math.PI * 2); ctx.fill();
+
+            // Name
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(p.name + (isMe ? ' (你)' : ''), p.x, p.y - PLAYER_RADIUS - 4);
+
+            // Health bar
+            if (p.alive) {
+                const bw = 36, bh = 5;
+                const bx = p.x - bw / 2, by = p.y + PLAYER_RADIUS + 4;
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(bx, by, bw, bh);
+                const pct = Math.max(0, p.health / MAX_HEALTH);
+                ctx.fillStyle = pct > 0.5 ? '#22c55e' : pct > 0.25 ? '#f59e0b' : '#ef4444';
+                ctx.fillRect(bx, by, bw * pct, bh);
+            }
+
+            ctx.restore();
+        }
+
+        function drawBullets() {
+            for (const b of bullets) {
+                ctx.save();
+                ctx.shadowColor = b.ownerColor;
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = b.ownerColor;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, BULLET_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.beginPath();
+                ctx.arc(b.x - 1.5, b.y - 1.5, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function drawParticles() {
+            for (const p of particles) {
+                ctx.globalAlpha = Math.max(0, p.life);
+                ctx.fillStyle = p.color;
+                ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawRespawnTimer() {
+            if (me.alive) return;
+            const now = performance.now() / 1000;
+            const remain = Math.max(0, me.respawnAt - now);
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 28px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`RESPAWN ${remain.toFixed(1)}s`, WORLD_W / 2, WORLD_H / 2);
+        }
+
+        // ============================================================
+        //  GAME LOOP
+        // ============================================================
+        let lastTime = 0;
+
+        function loop(ts) {
+            if (!gameRunning) { requestAnimationFrame(loop); return; }
+            const dt = Math.min(0.05, (ts - lastTime) / 1000 || 0);
+            lastTime = ts;
+
+            updateLocalPlayer(dt);
+            updateRemotePlayers(dt);
+            updateBullets(dt);
+            updateParticles(dt);
+
+            const now = performance.now();
+            if (now - lastSync >= SYNC_INTERVAL) {
+                broadcastState();
+                lastSync = now;
+            }
+
+            updateHUD();
+            render();
+            requestAnimationFrame(loop);
+        }
+
+        function updateHUD() {
+            document.getElementById('health-fill').style.width = (me.health / MAX_HEALTH * 100) + '%';
+            document.getElementById('my-score').textContent = me.score;
+            document.getElementById('player-count').textContent = remotePlayers.size + 1;
+        }
+
+        function updateScoreboard() {
+            const list = document.getElementById('score-list');
+            const all = [{ name: me.name, score: me.score, color: me.color, me: true }];
+            for (const [pid, rp] of remotePlayers) {
+                all.push({ name: rp.name, score: rp.score, color: rp.color, me: false });
+            }
+            all.sort((a, b) => b.score - a.score);
+            list.innerHTML = all.map(p =>
+                `<div class="score-row ${p.me ? 'me' : ''}"><span><span class="dot" style="background:${p.color}"></span>${p.name}</span><span>${p.score}</span></div>`
+            ).join('');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // ============================================================
+        //  INPUT
+        // ============================================================
+        window.addEventListener('keydown', e => {
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ') { e.preventDefault(); mouse.down = true; }
+        });
+        window.addEventListener('keyup', e => {
+            keys[e.key.toLowerCase()] = false;
+            if (e.key === ' ') mouse.down = false;
+        });
+
+        function screenToWorld(sx, sy) {
+            const rect = canvas.getBoundingClientRect();
+            const cx = sx - rect.left;
+            const cy = sy - rect.top;
+            // cx is in CSS pixels; scaleX maps world -> device pixels, so divide by DPR first
+            return { x: (cx * DPR) / scaleX, y: (cy * DPR) / scaleY };
+        }
+
+        canvas.addEventListener('mousemove', e => {
+            const w = screenToWorld(e.clientX, e.clientY);
+            mouse.x = w.x;
+            mouse.y = w.y;
+        });
+        canvas.addEventListener('mousedown', () => mouse.down = true);
+        window.addEventListener('mouseup', () => mouse.down = false);
+
+        // Touch
+        const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+        const crosshair = document.getElementById('crosshair');
+        if (isTouch) {
+            document.getElementById('touch-controls').classList.add('active');
+            const stick = document.getElementById('stick');
+            const knob = document.getElementById('knob');
+            let stickId = null, stickCX = 0, stickCY = 0;
+            stick.addEventListener('touchstart', e => {
+                e.preventDefault();
+                const t = e.changedTouches[0];
+                stickId = t.identifier;
+                const rect = stick.getBoundingClientRect();
+                stickCX = rect.left + rect.width / 2;
+                stickCY = rect.top + rect.height / 2;
+            }, { passive: false });
+            stick.addEventListener('touchmove', e => {
+                for (const t of e.changedTouches) {
+                    if (t.identifier !== stickId) continue;
+                    let dx = t.clientX - stickCX, dy = t.clientY - stickCY;
+                    const max = 35, d = Math.hypot(dx, dy);
+                    if (d > max) { dx = dx / d * max; dy = dy / d * max; }
+                    knob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                    const nx = dx / max, ny = dy / max;
+                    keys['w'] = ny < -0.3; keys['s'] = ny > 0.3;
+                    keys['a'] = nx < -0.3; keys['d'] = nx > 0.3;
+                }
+            }, { passive: false });
+            stick.addEventListener('touchend', e => {
+                for (const t of e.changedTouches) {
+                    if (t.identifier === stickId) {
+                        stickId = null;
+                        knob.style.transform = 'translate(-50%,-50%)';
+                        keys['w'] = keys['s'] = keys['a'] = keys['d'] = false;
+                    }
+                }
+            });
+
+            const fireBtn = document.getElementById('fire-btn');
+            fireBtn.addEventListener('touchstart', e => { e.preventDefault(); mouse.down = true; }, { passive: false });
+            fireBtn.addEventListener('touchend', () => mouse.down = false);
+
+            // Touch aim on canvas
+            canvas.addEventListener('touchstart', e => {
+                const t = e.changedTouches[0];
+                const w = screenToWorld(t.clientX, t.clientY);
+                mouse.x = w.x; mouse.y = w.y;
+                mouse.down = true;
+            }, { passive: false });
+            canvas.addEventListener('touchend', () => { mouse.down = false; });
+            canvas.addEventListener('touchmove', e => {
+                const t = e.changedTouches[0];
+                const w = screenToWorld(t.clientX, t.clientY);
+                mouse.x = w.x; mouse.y = w.y;
+            }, { passive: false });
+        } else {
+            crosshair.style.display = 'block';
+            canvas.addEventListener('mousemove', e => {
+                const rect = canvas.getBoundingClientRect();
+                crosshair.style.left = (e.clientX - rect.left) + 'px';
+                crosshair.style.top = (e.clientY - rect.top) + 'px';
+            });
+        }
+
+        // ============================================================
+        //  UI FLOW
+        // ============================================================
+        const joinOverlay = document.getElementById('join-overlay');
+        const hud = document.getElementById('hud');
+        const scoreboard = document.getElementById('scoreboard');
+
+        const savedName = localStorage.getItem('player_name') || 'Player' + Math.floor(Math.random() * 1000);
+        document.getElementById('player-name').value = savedName;
+
+        document.getElementById('join-btn').addEventListener('click', () => {
+            const name = document.getElementById('player-name').value.trim() || 'Player';
+            me.name = name;
+            localStorage.setItem('player_name', name);
+
+            const statusEl = document.getElementById('join-status');
+            statusEl.textContent = '连接中...';
+            statusEl.className = 'status';
+
+            if (!initSupabase()) {
+                statusEl.textContent = '❌ Supabase 配置缺失，请联系房主';
+                statusEl.className = 'status err';
+                return;
+            }
+
+            joinDorm();
+        });
+
+        function startGame() {
+            joinOverlay.classList.add('hidden');
+            hud.style.display = 'flex';
+            scoreboard.style.display = 'block';
+            resize();
+            gameRunning = true;
+            lastTime = performance.now();
+            lastSync = performance.now(); // 避免加入后立即重复广播
+            showToast(`已进入宿舍`);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (channel) {
+                // Notify others we're leaving before unsubscribing
+                channel.send({
+                    type: 'broadcast',
+                    event: 'leave',
+                    payload: { id: me.id }
+                });
+                channel.unsubscribe();
+            }
+        });
+
+        resize();
+        requestAnimationFrame(loop);
+    </script>
+</body>
+
+</html>
