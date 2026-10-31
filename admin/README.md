@@ -11,7 +11,7 @@
 |---|---|
 | Project URL | `https://gxdackbnfxbaqcpabcgs.supabase.co` |
 | Publishable key | `sb_publishable_7zuwaGboS5j-3Mq6Q0l8vw_VKkJLql2` |
-| 相关文件 | `analytics.js`、`admin/analytics.html`、`admin/schema.sql`、`game/multiplayer-arena.html` |
+| 相关文件 | `supabase-kit.js`、`admin/analytics.html`、`admin/schema.sql`、`game/multiplayer-arena.html` |
 
 > 本文档中的 SQL 与 `schema.sql` 保持一致，是最新验证过的版本。改动 SQL 时请两边同步。
 
@@ -65,7 +65,7 @@ Presence **只用于加入/离开通知**，加入时 `track({ name })` 一次�
 
 ### 1. 工作原理
 
-所有游戏页引入共用脚本 `analytics.js`，打开页面时：
+所有游戏页引入共用脚本 `supabase-kit.js`（同时提供埋点 `Analytics` 与共享客户端 `Supa.client()`），打开页面时：
 
 ```
 insert gp_players（409 则改为 patch 更新）→ insert gp_sessions
@@ -78,7 +78,7 @@ insert gp_players（409 则改为 patch 更新）→ insert gp_sessions
 ### 2. 接入方式（每个游戏页两行）
 
 ```html
-<script src="../analytics.js"></script>
+<script src="../supabase-kit.js"></script>
 <script>Analytics.init({ game: 'my-game-slug' });</script>
 ```
 
@@ -115,7 +115,7 @@ Analytics.playerId();                         // 当前匿名 ID
 - `authenticated`（你登录后）：SELECT + 调用聚合函数
 - 所以 publishable key 写在公开 HTML 里也是安全的：别人最多能往表里写垃圾行，读不到任何数据
 
-**重要陷阱：不能用 upsert。** `INSERT ... ON CONFLICT DO UPDATE`（即 `Prefer: resolution=merge-duplicates`）在 RLS 下要求 SELECT 策略能看到冲突行，anon 没有 SELECT 权限会直接报 `42501`。`analytics.js` 采用「先插，遇 409 再 PATCH」绕过。
+**重要陷阱：不能用 upsert。** `INSERT ... ON CONFLICT DO UPDATE`（即 `Prefer: resolution=merge-duplicates`）在 RLS 下要求 SELECT 策略能看到冲突行，anon 没有 SELECT 权限会直接报 `42501`。`supabase-kit.js` 采用「先插，遇 409 再 PATCH」绕过。
 
 ### 6. 看板 `admin/analytics.html`
 

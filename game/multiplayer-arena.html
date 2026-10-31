@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>宿舍大乱斗 · Dorm Brawl Online</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../supabase-kit.js"></script>
     <style>
         *,
         *::before,
@@ -524,32 +524,16 @@
         let pingTimer = null;
 
         // ============================================================
-        //  SUPABASE — 嵌入配置，分享给同学无需再输入
+        //  SUPABASE — 配置与客户端由 ../supabase-kit.js 统一提供
         // ============================================================
-        const EMBEDDED_SUPABASE_CONFIG = {
-            url: 'https://gxdackbnfxbaqcpabcgs.supabase.co',
-            key: 'sb_publishable_7zuwaGboS5j-3Mq6Q0l8vw_VKkJLql2'
-        };
-
-        function loadSbConfig() {
-            return {
-                url: localStorage.getItem('sb_url') || EMBEDDED_SUPABASE_CONFIG.url,
-                key: localStorage.getItem('sb_key') || EMBEDDED_SUPABASE_CONFIG.key
-            };
-        }
-
         function initSupabase() {
-            const cfg = loadSbConfig();
-            if (!cfg.url || !cfg.key || cfg.key === 'PASTE_YOUR_PUBLISHABLE_KEY_HERE') return false;
-            try {
-                sbClient = window.supabase.createClient(cfg.url, cfg.key, {
-                    realtime: { params: { eventsPerSecond: 10 } }
-                });
+            return Supa.client().then(function (c) {
+                sbClient = c;
                 return true;
-            } catch (e) {
+            }).catch(function (e) {
                 console.error('Supabase init error:', e);
                 return false;
-            }
+            });
         }
 
         function joinDorm() {
@@ -1241,13 +1225,14 @@
             statusEl.textContent = '连接中...';
             statusEl.className = 'status';
 
-            if (!initSupabase()) {
-                statusEl.textContent = '❌ Supabase 配置缺失，请联系房主';
-                statusEl.className = 'status err';
-                return;
-            }
-
-            joinDorm();
+            initSupabase().then(function (ok) {
+                if (!ok) {
+                    statusEl.textContent = '❌ Supabase 连接失败，请稍后重试';
+                    statusEl.className = 'status err';
+                    return;
+                }
+                joinDorm();
+            });
         });
 
         function startGame() {
@@ -1277,8 +1262,7 @@
         resize();
         requestAnimationFrame(loop);
     </script>
-    <!-- Game Analytics -->
-    <script src="../analytics.js"></script>
+    <!-- Game Analytics（supabase-kit.js 已在 head 加载） -->
     <script>
         Analytics.init({
             game: 'multiplayer-arena',

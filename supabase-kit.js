@@ -1,13 +1,23 @@
 /*!
- * analytics.js — 轻量网页游戏埋点（Supabase REST，无需后端）
+ * supabase-kit.js — showroom 统一 Supabase 入口（所有游戏页共用）
  *
- * 用法：
- *   <script src="../analytics.js"></script>
+ * 提供两件事：
+ *   1. Analytics      — 轻量埋点（REST 直连，不依赖 supabase-js）
+ *   2. Supa.client()  — 共享 Supabase JS 客户端（Realtime 用；单例，自动按需加载 CDN）
+ *
+ * 用法（埋点，所有游戏页）：
+ *   <script src="../supabase-kit.js"></script>
  *   <script>
  *     Analytics.init({ game: 'angry-birds' });
- *     Analytics.score(1200);                          // 可选
- *     Analytics.event('level_start', { level: 3 });   // 可选
+ *     Analytics.score(1200);                        // 可选
+ *     Analytics.event('level_start', { level: 3 }); // 可选
  *   </script>
+ *
+ * 用法（Realtime 多人游戏）：
+ *   Supa.client().then(function (sb) {
+ *     const channel = sb.channel('xxx', { config: { broadcast: { self: true } } });
+ *     // ...
+ *   });
  *
  * 统计口径：
  *   - player_id 存在 localStorage，同一浏览器算同一玩家（换设备算新玩家）
@@ -19,9 +29,57 @@
 
   var SUPABASE_URL = 'https://gxdackbnfxbaqcpabcgs.supabase.co';
   var SUPABASE_KEY = 'sb_publishable_7zuwaGboS5j-3Mq6Q0l8vw_VKkJLql2';
+  var CDN_URL = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
   var REST = SUPABASE_URL + '/rest/v1';
   var FLUSH_MS = 15000;
 
+  // ============================================================
+  //  Supa — 共享客户端（Realtime）
+  // ============================================================
+  var libPromise = null;
+  var clientPromise = null;
+
+  function loadLib() {
+    if (global.supabase && typeof global.supabase.createClient === 'function') {
+      return Promise.resolve();
+    }
+    if (libPromise) return libPromise;
+    libPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = CDN_URL;
+      s.onload = function () { resolve(); };
+      s.onerror = function () {
+        libPromise = null;
+        reject(new Error('supabase-js 加载失败'));
+      };
+      document.head.appendChild(s);
+    });
+    return libPromise;
+  }
+
+  function client() {
+    if (!clientPromise) {
+      clientPromise = loadLib().then(function () {
+        return global.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          realtime: { params: { eventsPerSecond: 10 } }
+        });
+      }).catch(function (e) {
+        clientPromise = null; // 允许重试
+        throw e;
+      });
+    }
+    return clientPromise;
+  }
+
+  global.Supa = {
+    url: SUPABASE_URL,
+    key: SUPABASE_KEY,
+    client: client
+  };
+
+  // ============================================================
+  //  Analytics — 轻量埋点（fetch 直连 REST，零依赖）
+  // ============================================================
   var LS_PLAYER = 'ga_player_id';
   var LS_NAME = 'player_name';
 
