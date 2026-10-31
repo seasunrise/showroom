@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>游戏数据看板 · Showroom</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0f1115;
+      --card: #181b22;
+      --card-hover: #1f232d;
+      --border: #2a2f3a;
+      --text: #e8eaf0;
+      --muted: #9aa3b2;
+      --accent: #6ea8fe;
+      --green: #22c55e;
+      --red: #ef4444;
+    }
+
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-size: 14px;
+      line-height: 1.6;
+      min-height: 100dvh;
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 32px 20px 64px;
+    }
+
+    /* 登录 */
+    #login-view {
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      width: min(360px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 26px;
+    }
+
+    .login-card h1 {
+      font-size: 1.25rem;
+      margin-bottom: 4px;
+    }
+
+    .login-card .sub {
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #12151c;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      color: var(--text);
+      font-size: 0.92rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #0b1020;
+      background: var(--accent);
+      padding: 10px 16px;
+      transition: opacity .15s;
+    }
+
+    button:hover {
+      opacity: .88;
+    }
+
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    #login-btn {
+      width: 100%;
+      margin-top: 4px;
+      padding: 11px;
+    }
+
+    .msg {
+      font-size: 0.82rem;
+      margin-top: 12px;
+      min-height: 18px;
+      color: var(--muted);
+    }
+
+    .msg.err {
+      color: var(--red);
+    }
+
+    .note {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin-top: 16px;
+      line-height: 1.6;
+    }
+
+    /* 看板 */
+    #dash-view {
+      display: none;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .topbar h1 {
+      font-size: 1.35rem;
+      letter-spacing: .02em;
+    }
+
+    .topbar .sub {
+      color: var(--muted);
+      font-size: .8rem;
+    }
+
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .switch {
+      display: inline-flex;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    .switch button {
+      background: transparent;
+      color: var(--muted);
+      font-weight: 500;
+      padding: 6px 14px;
+      border-radius: 8px;
+    }
+
+    .switch button.on {
+      background: var(--accent);
+      color: #0b1020;
+      font-weight: 600;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .kpi .label {
+      color: var(--muted);
+      font-size: .76rem;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .kpi .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      margin-top: 4px;
+    }
+
+    .kpi .hint {
+      color: var(--muted);
+      font-size: .72rem;
+      margin-top: 2px;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .panel-head h2 {
+      font-size: .95rem;
+      font-weight: 600;
+    }
+
+    .panel-head .meta {
+      color: var(--muted);
+      font-size: .74rem;
+    }
+
+    /* 每日柱状图 */
+    .chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 150px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .bar-col {
+      flex: 1 0 10px;
+      min-width: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .bar-track {
+      width: 100%;
+      display: flex;
+      align-items: flex-end;
+      height: 116px;
+    }
+
+    .bar {
+      width: 100%;
+      background: var(--accent);
+      border-radius: 3px 3px 0 0;
+      min-height: 2px;
+      opacity: .9;
+    }
+
+    .bar-col .day {
+      font-size: .64rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* 表格 */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .84rem;
+    }
+
+    th,
+    td {
+      padding: 9px 8px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    th {
+      color: var(--muted);
+      font-weight: 500;
+      font-size: .72rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    td.num,
+    th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    tbody tr:hover {
+      background: var(--card-hover);
+    }
+
+    .mini-bar {
+      height: 6px;
+      background: var(--border);
+      border-radius: 999px;
+      overflow: hidden;
+      min-width: 90px;
+    }
+
+    .mini-bar span {
+      display: block;
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .tag {
+      display: inline-block;
+      font-size: .7rem;
+      color: var(--accent);
+      border: 1px solid rgba(110, 168, 254, .4);
+      border-radius: 999px;
+      padding: 0 8px;
+      line-height: 1.6;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: .84rem;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    .players-scroll {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    .name {
+      font-weight: 500;
+    }
+
+    .anon {
+      color: var(--muted);
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: .72rem;
+      text-align: center;
+      margin-top: 28px;
+    }
+
+    @media (max-width: 640px) {
+      .wrap {
+        padding: 20px 16px 48px;
+      }
+
+      .kpi .value {
+        font-size: 1.3rem;
+      }
+
+      th,
+      td {
+        padding: 8px 6px;
+      }
+
+      .hide-sm {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="login-view">
+    <div class="login-card">
+      <h1>游戏数据看板</h1>
+      <div class="sub">Showroom · Analytics</div>
+      <input type="email" id="email" placeholder="管理员邮箱" autocomplete="username">
+      <input type="password" id="password" placeholder="密码" autocomplete="current-password">
+      <button id="login-btn">登录</button>
+      <div class="msg" id="login-msg"></div>
+      <div class="note">
+        数据受 Supabase 行级权限保护，只有登录的管理员才能读取。<br>
+        忘记密码可在 Supabase → Authentication → Users 里重置。
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap" id="dash-view">
+    <div class="topbar">
+      <div>
+        <h1>游戏数据看板</h1>
+        <div class="sub" id="range-label">最近 7 天</div>
+      </div>
+      <div class="actions">
+        <div class="switch" id="range-switch">
+          <button data-days="7" class="on">7 天</button>
+          <button data-days="30">30 天</button>
+        </div>
+        <button class="ghost" id="refresh-btn">刷新</button>
+        <button class="ghost" id="logout-btn">退出</button>
+      </div>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>每日游玩时长</h2>
+        <span class="meta" id="daily-meta"></span>
+      </div>
+      <div class="chart" id="daily-chart"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>各游戏表现</h2>
+        <span class="meta">按总游玩时长排序</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>游戏</th>
+            <th class="num">玩家</th>
+            <th class="num">场次</th>
+            <th class="num">总时长</th>
+            <th class="num hide-sm">人均</th>
+            <th class="hide-sm">占比</th>
+          </tr>
+        </thead>
+        <tbody id="games-body"></tbody>
+      </table>
+      <div class="empty" id="games-empty" style="display:none">这段时间还没有数据</div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>玩家名单</h2>
+        <span class="meta" id="players-meta"></span>
+      </div>
+      <div class="players-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>玩家</th>
+              <th class="num">场次</th>
+              <th class="num">总时长</th>
+              <th class="hide-sm">玩过的游戏</th>
+              <th class="num">最近游玩</th>
+            </tr>
+          </thead>
+          <tbody id="players-body"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="players-empty" style="display:none">这段时间还没有玩家</div>
+    </div>
+
+    <footer>仅本地/管理员可见 · 数据来自 Supabase Postgres</footer>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://gxdackbnfxbaqcpabcgs.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_7zuwaGboS5j-3Mq6Q0l8vw_VKkJLql2';
+
+    const GAME_NAMES = {
+      'angry-birds': '愤怒的小鸟',
+      'game-snake': '贪吃蛇',
+      'mech-workshop': '机械工坊',
+      'tank-battle': '霓虹坦克',
+      'multiplayer-arena': '宿舍大乱斗·在线',
+      'dorm-brawl': '宿舍大乱斗'
+    };
+
+    const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let days = 7;
+    let loading = false;
+
+    /* ---------- 工具 ---------- */
+    function fmtDur(sec) {
+      sec = Math.round(sec || 0);
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h) return h + 'h ' + m + 'm';
+      if (m) return m + 'm ' + s + 's';
+      return s + 's';
+    }
+
+    function fmtNum(n) {
+      return (Number(n) || 0).toLocaleString('zh-CN');
+    }
+
+    function fmtDate(iso) {
+      const d = new Date(iso);
+      const p = (v) => String(v).padStart(2, '0');
+      return (d.getMonth() + 1) + '/' + d.getDate() + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+
+    function gameName(slug) {
+      return GAME_NAMES[slug] || slug;
+    }
+
+    function shortId(id) {
+      return String(id).slice(0, 8);
+    }
+
+    /* ---------- 登录 ---------- */
+    const loginView = document.getElementById('login-view');
+    const dashView = document.getElementById('dash-view');
+    const loginMsg = document.getElementById('login-msg');
+
+    function setLoginMsg(text, isErr) {
+      loginMsg.textContent = text || '';
+      loginMsg.className = 'msg' + (isErr ? ' err' : '');
+    }
+
+    async function signIn() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      if (!email || !password) {
+        setLoginMsg('请输入邮箱和密码', true);
+        return;
+      }
+      setLoginMsg('登录中...');
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      if (error) setLoginMsg('登录失败：' + error.message, true);
+    }
+
+    document.getElementById('login-btn').addEventListener('click', signIn);
+    document.getElementById('password').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') signIn();
+    });
+    document.getElementById('logout-btn').addEventListener('click', () => sb.auth.signOut());
+
+    function showDashboard(show) {
+      loginView.style.display = show ? 'none' : 'flex';
+      dashView.style.display = show ? 'block' : 'none';
+      if (show) load();
+    }
+
+    sb.auth.onAuthStateChange((_event, session) => {
+      showDashboard(!!session);
+    });
+
+    /* ---------- 数据 ---------- */
+    async function load() {
+      if (loading) return;
+      loading = true;
+      document.getElementById('range-label').textContent = '最近 ' + days + ' 天';
+
+      const [overview, games, daily, players] = await Promise.all([
+        sb.rpc('gp_overview', { p_days: days }),
+        sb.rpc('gp_game_stats', { p_days: days }),
+        sb.rpc('gp_daily_stats', { p_days: days }),
+        sb.rpc('gp_player_list', { p_days: days })
+      ]);
+
+      const err = overview.error || games.error || daily.error || players.error;
+      if (err) {
+        alert('读取数据失败：' + err.message + '\n请确认已执行 admin/schema.sql');
+        loading = false;
+        return;
+      }
+
+      renderKpis(overview.data || {});
+      renderGames(games.data || []);
+      renderDaily(daily.data || []);
+      renderPlayers(players.data || []);
+      loading = false;
+    }
+
+    function renderKpis(o) {
+      const cards = [
+        ['独立玩家', fmtNum(o.players), '近 ' + days + ' 天玩过的人'],
+        ['游玩场次', fmtNum(o.sessions), '每打开一次算一场'],
+        ['总游玩时长', fmtDur(o.total_seconds), '只算页面可见的时间'],
+        ['人均时长', fmtDur(o.avg_seconds), '中位数 ' + fmtDur(o.median_seconds)],
+        ['新增玩家', fmtNum(o.new_players), '首次出现的时间在区间内'],
+        ['回访玩家', fmtNum(o.returning_players), '之前来过、这次又来了']
+      ];
+      document.getElementById('kpis').innerHTML = cards.map(([label, value, hint]) =>
+        '<div class="kpi"><div class="label">' + label + '</div>' +
+        '<div class="value">' + value + '</div>' +
+        '<div class="hint">' + hint + '</div></div>'
+      ).join('');
+    }
+
+    function renderGames(rows) {
+      const body = document.getElementById('games-body');
+      const empty = document.getElementById('games-empty');
+      if (!rows.length) {
+        body.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+      empty.style.display = 'none';
+      const maxTotal = Math.max.apply(null, rows.map(r => Number(r.total_seconds) || 0)) || 1;
+
+      body.innerHTML = rows.map(r => {
+        const total = Number(r.total_seconds) || 0;
+        const pct = Math.round(total / maxTotal * 100);
+        return '<tr>' +
+          '<td><span class="tag">' + gameName(r.game_slug) + '</span></td>' +
+          '<td class="num">' + fmtNum(r.players) + '</td>' +
+          '<td class="num">' + fmtNum(r.sessions) + '</td>' +
+          '<td class="num">' + fmtDur(total) + '</td>' +
+          '<td class="num hide-sm">' + fmtDur(r.avg_seconds) + '</td>' +
+          '<td class="hide-sm"><div class="mini-bar"><span style="width:' + pct + '%"></span></div></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function renderDaily(rows) {
+      const chart = document.getElementById('daily-chart');
+      const meta = document.getElementById('daily-meta');
+      if (!rows.length) {
+        chart.innerHTML = '<div class="empty" style="width:100%">这段时间还没有数据</div>';
+        meta.textContent = '';
+        return;
+      }
+      const max = Math.max.apply(null, rows.map(r => Number(r.total_seconds) || 0)) || 1;
+      const total = rows.reduce((sum, r) => sum + (Number(r.total_seconds) || 0), 0);
+      meta.textContent = '合计 ' + fmtDur(total);
+
+      chart.innerHTML = rows.map(r => {
+        const sec = Number(r.total_seconds) || 0;
+        const hPct = Math.max(2, Math.round(sec / max * 100));
+        const d = new Date(r.day);
+        const label = (d.getMonth() + 1) + '/' + d.getDate();
+        return '<div class="bar-col" title="' + label + ' · ' + fmtDur(sec) + ' · ' + fmtNum(r.players) + ' 人">' +
+          '<div class="bar-track"><div class="bar" style="height:' + hPct + '%"></div></div>' +
+          '<div class="day">' + label + '</div></div>';
+      }).join('');
+    }
+
+    function renderPlayers(rows) {
+      const body = document.getElementById('players-body');
+      const empty = document.getElementById('players-empty');
+      const meta = document.getElementById('players-meta');
+      if (!rows.length) {
+        body.innerHTML = '';
+        empty.style.display = 'block';
+        meta.textContent = '';
+        return;
+      }
+      empty.style.display = 'none';
+      meta.textContent = rows.length + ' 位玩家' + (rows.length > 100 ? '（展示前 100）' : '');
+
+      body.innerHTML = rows.slice(0, 100).map(r => {
+        const name = r.nickname
+          ? '<span class="name">' + r.nickname + '</span>'
+          : '<span class="anon">匿名 ' + shortId(r.player_id) + '</span>';
+        return '<tr>' +
+          '<td>' + name + '</td>' +
+          '<td class="num">' + fmtNum(r.sessions) + '</td>' +
+          '<td class="num">' + fmtDur(r.total_seconds) + '</td>' +
+          '<td class="hide-sm">' + (r.games || '').split(', ').map(g => '<span class="tag">' + gameName(g) + '</span>').join(' ') + '</td>' +
+          '<td class="num">' + fmtDate(r.last_played) + '</td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    /* ---------- 交互 ---------- */
+    document.getElementById('range-switch').addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      days = Number(btn.dataset.days);
+      document.querySelectorAll('#range-switch button').forEach(b => b.classList.toggle('on', b === btn));
+      load();
+    });
+    document.getElementById('refresh-btn').addEventListener('click', load);
+
+    /* ---------- 启动 ---------- */
+    (async () => {
+      const { data } = await sb.auth.getSession();
+      showDashboard(!!(data && data.session));
+    })();
+  </script>
+</body>
+
+</html>
