@@ -1,0 +1,37 @@
+{
+  "id": "/",
+  "name": "Electronics 101 — hands-on 3D lessons",
+  "short_name": "Electronics 101",
+  "description": "Free interactive 3D electronics lessons: switch each circuit on, change its parts and watch the current flow.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6eddd",
+  "theme_color": "#f6eddd",
+  "categories": [
+    "education"
+  ],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

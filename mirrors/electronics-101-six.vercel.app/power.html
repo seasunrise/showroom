@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en" class="is-loading">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Power and heat · Electronics 101</title>
+    <meta name="description" content="Every resistor turns the energy flowing through it into heat. How much each second is its power: the voltage across it times the current through it, P = V × I, in watts." />
+    <meta name="author" content="Dilum Sanjaya" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="theme-color" content="#f6eddd" />
+    <meta name="color-scheme" content="light" />
+    <meta name="application-name" content="Electronics 101" />
+    <meta name="apple-mobile-web-app-title" content="Electronics 101" />
+    <link rel="icon" href="favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <link rel="manifest" href="site.webmanifest" />
+
+    <!-- link previews (Open Graph, X) -->
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="Electronics 101" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:title" content="Power and heat — Resistors, lesson 7" />
+    <meta property="og:description" content="Every resistor turns the energy flowing through it into heat." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:creator" content="@DilumSanjaya" />
+    <link rel="canonical" href="power.html" />
+    <meta property="og:url" content="https://electronics-101-six.vercel.app/power" />
+    <meta property="og:image" content="https://electronics-101-six.vercel.app/og/power.jpg?v=7b5bfda5" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Power and heat: the lesson’s circuit on an illustrated 3D workbench" />
+    <meta name="twitter:image" content="https://electronics-101-six.vercel.app/og/power.jpg?v=7b5bfda5" />
+    <meta name="twitter:image:alt" content="Power and heat: the lesson’s circuit on an illustrated 3D workbench" />
+    <script type="application/ld+json">{"@context":"https://schema.org","@type":"LearningResource","name":"Power and heat","description":"Every resistor turns the energy flowing through it into heat. How much each second is its power: the voltage across it times the current through it, P = V × I, in watts.","url":"https://electronics-101-six.vercel.app/power","image":"https://electronics-101-six.vercel.app/og/power.jpg","inLanguage":"en","isAccessibleForFree":true,"educationalLevel":"Beginner","learningResourceType":"Interactive lesson","position":7,"isPartOf":{"@type":"LearningResource","name":"Electronics 101: Resistors","url":"https://electronics-101-six.vercel.app/"},"author":{"@type":"Person","name":"Dilum Sanjaya","url":"https://x.com/DilumSanjaya"}}</script>
+    <!-- linked here rather than imported from main.js, so the first paint
+         (the loading screen) is already styled, on the dev server too -->
+    <link rel="preload" href="assets/barlow-semi-condensed-latin-600-normal-BkLiAYu4.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="assets/barlow-semi-condensed-latin-500-normal-G0uxJNrM.woff2" as="font" type="font/woff2" crossorigin />
+    <script type="module" crossorigin src="assets/index-ygiyd4oC.js"></script>
+    <link rel="stylesheet" crossorigin href="assets/index-DABU3cLG.css">
+  </head>
+  <body>
+    <!-- Covers the page until the bench is built and every experiment card
+         has its picture (src/ui/loader.js) -->
+    <div class="loader" id="loader" role="status" aria-live="polite">
+      <div class="loader-inner">
+        <svg class="loader-logo" viewBox="0 0 50 50" aria-hidden="true">
+          <path class="hex" d="M25 4.5 42.8 14.75v20.5L25 45.5 7.2 35.25v-20.5z" />
+          <path class="zig" d="M7.2 25h7.3M35.5 25h7.3" />
+          <rect class="zig" x="14.5" y="19" width="21" height="12" rx="5" />
+          <path class="band" d="M20.6 19.4v11.2M25 19.4v11.2M29.4 19.4v11.2" />
+        </svg>
+        <p class="loader-title">Electronics 101</p>
+        <div class="loader-track" aria-hidden="true"><span class="loader-fill"></span><span class="loader-shine"></span></div>
+        <p class="loader-step">Loading</p>
+        <noscript>
+          <style>.loader{overflow:auto}.loader-track,.loader-step{display:none}</style>
+          <div class="noscript">
+            <p>An interactive 3D course in your browser. Turn on JavaScript to start.</p>
+            <ol class="noscript-lessons"><li><b>Basics</b><ol><li><a href="closed-loop.html"><b>1. Open and closed circuits</b></a> — Electricity only flows round a complete loop: out of the battery’s +, through the bulb and back into its −.</li><li><a href="conductors.html"><b>2. Conductors &amp; insulators</b></a> — Some materials let current flow easily — conductors, like metals.</li><li><a href="ohms-law.html"><b>3. Volts, amps &amp; ohms</b></a> — Think of a wire as a pipe.</li><li><a href="circuit-types.html"><b>4. Types of circuit</b></a> — Open or closed, shorted, in series, in parallel or a mix: the same battery and bulbs behave very differently depending on how they are wired.</li><li><a href="cells.html"><b>5. Batteries: series &amp; parallel</b></a> — One AA cell gives 1.5 V.</li><li><a href="ac-dc.html"><b>6. AC and DC</b></a> — A battery gives direct current (DC): it always flows the same way.</li><li><a href="breadboard.html"><b>7. Using a breadboard</b></a> — A breadboard lets you build circuits without soldering.</li><li><a href="multimeter.html"><b>8. Using a multimeter</b></a> — A multimeter measures voltage, current and resistance, and checks continuity — but each test is set up differently: the dial picks what to measure, the red lead goes in the right socket, and the probes touch the right places.</li><li><a href="kirchhoff.html"><b>9. Kirchhoff’s two rules</b></a> — Two simple rules hold in every circuit.</li></ol></li><li><b>Resistors</b><ol><li><a href="resistor.html"><b>1. How a resistor works</b></a> — A resistor makes it harder for current to flow.</li><li><a href="colour-code.html"><b>2. Read the colour code</b></a> — Resistors are too small for printed numbers, so their value is painted on in coloured bands.</li><li><a href="series.html"><b>3. Resistors in series</b></a> — One after another, resistors make the current push through each of them in turn.</li><li><a href="parallel.html"><b>4. Resistors in parallel</b></a> — Side by side, resistors give the current more than one path.</li><li><a href="divider.html"><b>5. Voltage divider</b></a> — Two resistors in series share the supply’s voltage between them, in proportion to their resistance.</li><li><a href="pot.html"><b>6. Variable resistor</b></a> — A potentiometer is a resistor with a slider inside.</li><li><a href="power.html"><b>7. Power and heat</b></a> — Every resistor turns the energy flowing through it into heat.</li><li><a href="bridge.html"><b>8. Wheatstone bridge</b></a> — Two voltage dividers side by side, and a meter between their middles.</li></ol></li><li><b>LEDs &amp; diodes</b><ol><li><a href="led-polarity.html"><b>1. One way only</b></a> — An LED is a diode: it lets current through in one direction only.</li><li><a href="led-colours.html"><b>2. Colours and volts</b></a> — Each colour of LED needs a different voltage before it lights: red about 2 V, green a little more, blue and white about 3 V.</li><li><a href="led-burn.html"><b>3. Too much current</b></a> — An LED doesn’t know when to stop: past its forward voltage, the current shoots up.</li><li><a href="diode.html"><b>4. The plain diode</b></a> — A plain diode is an LED without the light: a one-way valve for current.</li><li><a href="led-series.html"><b>5. LEDs in series</b></a> — Two LEDs in a row share one current, but each needs its own voltage: about 2 V for a red one.</li></ol></li><li><b>Capacitors</b><ol><li><a href="cap-tank.html"><b>1. Like a water tank</b></a> — Before the electronics, a picture with water.</li><li><a href="cap-charge.html"><b>2. Charge it up</b></a> — A capacitor is two metal plates with a thin insulator between them.</li><li><a href="cap-fade.html"><b>3. Fading light</b></a> — With the power on, the capacitor fills up right beside the LED.</li><li><a href="cap-flash.html"><b>4. Only while charging</b></a> — Put a capacitor in line with an LED and current flows only while the capacitor is filling: the LED flashes and goes out.</li><li><a href="cap-pair.html"><b>5. In series &amp; parallel</b></a> — Side by side — in parallel — two capacitors act like one bigger one: their capacitances add, so together they hold more and take longer to fill.</li><li><a href="cap-smooth.html"><b>6. Smoothing</b></a> — A diode lets an AC supply through one way only: what comes out is DC, but in bumps — on for half of each cycle, off for the other half.</li><li><a href="cap-delay.html"><b>7. Timed delay</b></a> — Like a stair light on a timer: press the button and the capacitor fills in an instant.</li><li><a href="cap-code.html"><b>8. Reading the code</b></a> — Small ceramic capacitors carry a three-digit code: two digits, then how many zeros follow, in picofarads.</li><li><a href="flasher.html"><b>9. Two flashing LEDs</b></a> — With two transistors and two capacitors, two LEDs take turns on their own for as long as the power is on.</li></ol></li><li><b>Switches &amp; buttons</b><ol><li><a href="push-button.html"><b>1. Push to light</b></a> — A push button joins two wires only while you hold it down.</li><li><a href="slide-switch.html"><b>2. Slide switch</b></a> — A slide switch stays where you put it.</li><li><a href="and-or.html"><b>3. AND &amp; OR</b></a> — Two switches in series must both be on for current to get through: that is AND.</li><li><a href="two-way.html"><b>4. Two-way switch</b></a> — A light on the stairs can be switched from the top and from the bottom.</li></ol></li><li><b>Transistors</b><ol><li><a href="transistor-control.html"><b>1. Current control</b></a> — A transistor has three legs: collector, base and emitter.</li><li><a href="transistor-switch.html"><b>2. A current switch</b></a> — Give the base more current than the LED could ever use and the transistor is simply on: a switch, worked by current.</li><li><a href="transistor-gain.html"><b>3. Current gain</b></a> — Between off and fully on, a transistor amplifies: the collector current is about 200 times the base current, so halving one halves the other.</li><li><a href="npn-pnp.html"><b>4. NPN and PNP</b></a> — Transistors come in two kinds.</li><li><a href="darlington.html"><b>5. Touch switch</b></a> — Your skin conducts, just badly: across a touch pad, a few microamps get through your finger.</li><li><a href="transistor-not.html"><b>6. Turn it round: NOT</b></a> — Put the transistor beside the LED instead of in line with it, and it works the other way round.</li></ol></li><li><b>Sensors</b><ol><li><a href="ldr-meter.html"><b>1. Light sensor</b></a> — A light-dependent resistor (LDR) is made of a material that conducts better the more light falls on it.</li><li><a href="night-light.html"><b>2. Night light</b></a> — Put the LDR at the bottom of a voltage divider and feed its middle to a transistor.</li><li><a href="thermistor.html"><b>3. Temperature sensor</b></a> — A thermistor is a resistor that changes with temperature.</li><li><a href="reed.html"><b>4. Reed switch</b></a> — A reed switch is two thin iron reeds sealed in a glass tube, almost touching.</li><li><a href="heat-alarm.html"><b>5. Heat alarm</b></a> — The night light’s circuit, with the sensor moved to the top of the divider: a thermistor above a 2.4 kΩ resistor.</li><li><a href="night-set.html"><b>6. Adjustable night light</b></a> — Real sensor circuits have a small adjustable resistor, a trimmer, to set exactly when they switch.</li><li><a href="hall.html"><b>7. Hall-effect sensor</b></a> — A Hall-effect sensor is a chip with a thin slice of semiconductor inside.</li></ol></li></ol>
+          </div>
+        </noscript>
+      </div>
+    </div>
+
+    <!-- inert (not hidden) while the loading screen covers it -->
+    <div id="app" class="artboard" inert>
+      <svg class="traces" id="traces" aria-hidden="true"></svg>
+
+      <!-- Sidebar -->
+      <nav class="sidebar" aria-label="Main">
+        <button class="side-toggle" aria-label="Expand sidebar" aria-expanded="false" data-i18n-attr="aria-label">
+          <svg viewBox="0 0 24 24"><path d="M9 5.5 15.5 12 9 18.5" /></svg>
+        </button>
+        <ul class="side-nav">
+          <li class="is-active">
+            <a href="power.html#" data-nav="home" aria-label="Home" title="Home" data-i18n-attr="aria-label title">
+              <svg viewBox="0 0 32 32" class="fill"><path d="M16 4.2 3.6 15.1c-.7.6-.3 1.7.6 1.7H6v9.4c0 1 .8 1.8 1.8 1.8h5.4v-7.3h5.6V28h5.4c1 0 1.8-.8 1.8-1.8v-9.4h1.8c.9 0 1.3-1.1.6-1.7z" /></svg>
+              <span class="side-label" data-i18n>Home</span>
+            </a>
+          </li>
+          <li>
+            <a href="power.html#" data-nav="lessons" aria-label="Lessons" title="Lessons" data-i18n-attr="aria-label title">
+              <svg viewBox="0 0 32 32"><path d="M16 9.2C13.4 7.3 9.6 6.6 5 6.8v17.6c4.6-.2 8.4.5 11 2.4 2.6-1.9 6.4-2.6 11-2.4V6.8c-4.6-.2-8.4.5-11 2.4zM16 9.2v17.6" /><path d="M3 9.4v17.4c5-.4 9.6.2 13 2.2 3.4-2 8-2.6 13-2.2V9.4" /></svg>
+              <span class="side-label" data-i18n>Lessons</span>
+            </a>
+          </li>
+          <li>
+            <a href="power.html#" data-nav="parts" aria-label="Components" title="Components" data-i18n-attr="aria-label title">
+              <svg viewBox="0 0 32 32"><rect x="8.5" y="8.5" width="15" height="15" rx="1.6" /><rect x="12" y="12" width="8" height="8" rx=".6" class="fill" /><path d="M12.5 4v4.5M16 4v4.5M19.5 4v4.5M12.5 23.5V28M16 23.5V28M19.5 23.5V28M4 12.5h4.5M4 16h4.5M4 19.5h4.5M23.5 12.5H28M23.5 16H28M23.5 19.5H28" /></svg>
+              <span class="side-label" data-i18n>Components</span>
+            </a>
+          </li>
+          <li class="is-muted">
+            <a href="power.html#" data-nav="settings" aria-label="Settings" title="Settings" data-i18n-attr="aria-label title">
+              <svg viewBox="0 0 32 32" class="fill"><path d="M18.3 3.5h-4.6l-.7 3.4a9.7 9.7 0 0 0-2.6 1.5L7.1 7.3 4.8 11.2l2.6 2.3a9.9 9.9 0 0 0 0 3l-2.6 2.3 2.3 3.9 3.3-1.1c.8.6 1.7 1.1 2.6 1.5l.7 3.4h4.6l.7-3.4c.9-.4 1.8-.9 2.6-1.5l3.3 1.1 2.3-3.9-2.6-2.3a9.9 9.9 0 0 0 0-3l2.6-2.3-2.3-3.9-3.3 1.1c-.8-.6-1.7-1.1-2.6-1.5zM16 11.2a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z" /></svg>
+              <span class="side-label" data-i18n>Settings</span>
+            </a>
+          </li>
+          <li class="is-muted">
+            <a href="power.html#" data-nav="language" aria-label="Language" title="Language" data-i18n-attr="aria-label title">
+              <svg viewBox="0 0 32 32" class="line"><circle cx="16" cy="16" r="11.6" /><path d="M4.6 16h22.8M16 4.4c-3.3 3.2-5 7.1-5 11.6s1.7 8.4 5 11.6M16 4.4c3.3 3.2 5 7.1 5 11.6s-1.7 8.4-5 11.6M6.4 9.8h19.2M6.4 22.2h19.2" /></svg>
+              <span class="side-label" data-i18n>Language</span>
+              <span class="side-lang" aria-hidden="true">EN</span>
+            </a>
+          </li>
+        </ul>
+        <a class="credit credit-side" href="https://x.com/DilumSanjaya" target="_blank" rel="noopener noreferrer" title="Designed by x.com/DilumSanjaya">
+          <span class="credit-text"><small data-i18n>Designed by</small><b>x.com/DilumSanjaya</b></span>
+          <span class="credit-rule" aria-hidden="true"></span>
+          <svg class="credit-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.4l-5.8-7.59-6.64 7.59H.47l8.6-9.83L0 1.15h7.6l5.24 6.93zm-1.29 19.5h2.04L6.49 3.24H4.3z" /></svg>
+        </a>
+      </nav>
+      <aside class="flyout" id="flyout" aria-live="polite"></aside>
+
+      <!-- Brand -->
+      <header class="brand">
+        <svg class="brand-logo" viewBox="0 0 50 50" aria-hidden="true">
+          <path class="hex" d="M25 4.5 42.8 14.75v20.5L25 45.5 7.2 35.25v-20.5z" />
+          <path class="zig" d="M7.2 25h7.3M35.5 25h7.3" />
+          <rect class="zig" x="14.5" y="19" width="21" height="12" rx="5" />
+          <path class="band" d="M20.6 19.4v11.2M25 19.4v11.2M29.4 19.4v11.2" />
+        </svg>
+        <span class="brand-rule" aria-hidden="true"></span>
+        <div class="brand-text">
+          <h1>Electronics 101</h1>
+          <p data-i18n>Discover <i>·</i> Experiment <i>·</i> Build</p>
+        </div>
+      </header>
+
+      <!-- Stage: three.js bench + callouts -->
+      <main class="stage" id="stage">
+        <canvas id="board-canvas" aria-label="Interactive 3D workbench. Drag or use WASD to pan, Q and E to rotate, scroll to zoom." data-i18n-attr="aria-label"></canvas>
+        <svg class="leaders" id="leaders" aria-hidden="true"></svg>
+        <div class="rig" id="rig"></div>
+        <div class="tags" id="tags"></div>
+        <svg class="insp-lines" id="insp-lines" aria-hidden="true"></svg>
+        <div class="inspector" id="inspector" role="dialog" aria-label="Part inspector" data-i18n-attr="aria-label"></div>
+        <div class="tip" id="tip" role="tooltip"><b></b><span></span></div>
+
+        <section class="chart-card" id="chart-card" aria-label="Chart" data-i18n-attr="aria-label">
+          <span class="chart-grip" tabindex="0" role="button" aria-label="Resize the chart" data-i18n-attr="aria-label">
+            <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 10.5V2h8.5M2 6.5 6.5 2" /></svg>
+          </span>
+          <header class="chart-head">
+            <span class="chart-title"></span>
+            <span class="chart-value"></span>
+            <button class="chart-fold" type="button" aria-expanded="true" aria-label="Fold the chart" data-i18n-attr="aria-label">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+          </header>
+          <div class="chart-body"></div>
+        </section>
+
+        <div class="circuit-dialog" id="circuit-dialog" hidden>
+          <section class="cd-card" role="dialog" aria-labelledby="cd-title">
+            <header class="cd-head">
+              <div class="cd-heading">
+                <h2 class="cd-title" id="cd-title" data-i18n>Circuit</h2>
+                <span class="cd-lesson"></span>
+              </div>
+              <div class="cd-switch" role="tablist" aria-label="Show the circuit as" data-i18n-attr="aria-label">
+                <button type="button" role="tab" data-mode="diagram" aria-selected="true" data-i18n>Diagram</button>
+                <button type="button" role="tab" data-mode="board" aria-selected="false" data-i18n>Breadboard</button>
+              </div>
+              <button class="cd-close" type="button" aria-label="Close" title="Close (Esc)" data-i18n-attr="title aria-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+              </button>
+            </header>
+            <div class="cd-body"></div>
+            <div class="cd-zoom" role="toolbar" aria-label="Zoom" data-i18n-attr="aria-label">
+              <button type="button" data-zoom="xray" aria-pressed="false" title="See through the parts" aria-label="See through the parts" data-i18n-attr="title aria-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6z" /><circle cx="12" cy="12" r="2.8" /></svg>
+              </button>
+              <span class="cd-zoom-sep" aria-hidden="true"></span>
+              <button type="button" data-zoom="out" title="Zoom out" aria-label="Zoom out" data-i18n-attr="title aria-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" /></svg>
+              </button>
+              <button type="button" data-zoom="in" title="Zoom in" aria-label="Zoom in" data-i18n-attr="title aria-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+              </button>
+              <button type="button" data-zoom="fit" title="Show all of it" aria-label="Show all of it" data-i18n-attr="title aria-label">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></svg>
+              </button>
+            </div>
+            <p class="cd-note"></p>
+            <div class="cd-tip" hidden></div>
+          </section>
+        </div>
+
+        <div class="viewbar" id="viewbar" role="toolbar" aria-label="3D view" data-i18n-attr="aria-label">
+          <p class="view-hint" data-i18n>Drag or WASD to pan · Q / E to rotate · Scroll to zoom</p>
+          <button data-view="left" title="Turn left (Q)" aria-label="Turn left" data-i18n-attr="title aria-label">
+            <svg viewBox="0 0 24 24"><path d="M4.5 10.5A8 8 0 1 1 6 17" /><path d="M4 5v5.8h5.8" /></svg>
+          </button>
+          <button data-view="right" title="Turn right (E)" aria-label="Turn right" data-i18n-attr="title aria-label">
+            <svg viewBox="0 0 24 24"><path d="M19.5 10.5A8 8 0 1 0 18 17" /><path d="M20 5v5.8h-5.8" /></svg>
+          </button>
+          <span class="viewbar-sep"></span>
+          <button data-view="out" title="Zoom out (−)" aria-label="Zoom out" data-i18n-attr="title aria-label">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14" /></svg>
+          </button>
+          <button data-view="in" title="Zoom in (+)" aria-label="Zoom in" data-i18n-attr="title aria-label">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
+          </button>
+          <span class="viewbar-sep"></span>
+          <button data-view="reset" class="compass" title="Reset view (R)" aria-label="Reset view" data-i18n-attr="title aria-label">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" /><g class="compass-needle"><path d="M12 5.2 14.2 12h-4.4z" class="fill" /><path d="M12 18.8 9.8 12h4.4z" /></g></svg>
+          </button>
+          <button data-view="top" title="View from above (T)" aria-label="View from above" data-i18n-attr="title aria-label" aria-pressed="false">
+            <svg viewBox="0 0 24 24"><rect x="4.5" y="7.5" width="15" height="12" rx="1.5" /><path d="M8.5 11.5h7M8.5 15.5h4" /><path d="M12 1.8v3.6M10.2 3.6 12 5.4l1.8-1.8" /></svg>
+          </button>
+        </div>
+      </main>
+
+      <!-- Top-right status -->
+      <section class="status" aria-label="Progress" data-i18n-attr="aria-label">
+        <div class="progress-card">
+          <svg viewBox="0 0 40 40" class="progress-icon" aria-hidden="true"><path d="M20 10.6c-3.3-2.4-8.2-3.2-14-3v21.2c5.8-.2 10.7.6 14 3 3.3-2.4 8.2-3.2 14-3V7.6c-5.8-.2-10.7.6-14 3zM20 10.6v21.2" /><path d="M3 11v21c6.3-.5 12.6.2 17 2.6 4.4-2.4 10.7-3.1 17-2.6V11" /></svg>
+          <div class="progress-body">
+            <span class="progress-label" id="progress-label">Resistors</span>
+            <div class="progress-row">
+              <span class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span class="progress-fill" id="progress-fill"></span></span>
+              <span class="progress-count" id="progress-count">0/6</span>
+            </div>
+          </div>
+        </div>
+        <time class="clock" id="clock">
+          <span id="clock-date">APR 24, 2025</span>
+          <span id="clock-time">14:32:18</span>
+        </time>
+      </section>
+
+      <!-- Right info panel -->
+      <section class="info-card" aria-label="Lesson information" data-i18n-attr="aria-label">
+        <div class="tabs" role="tablist">
+          <button role="tab" aria-selected="false" data-i18n>Overview</button>
+          <button role="tab" aria-selected="false" data-i18n>Components</button>
+          <button role="tab" aria-selected="true" class="is-active" data-i18n>Circuit</button>
+          <button role="tab" aria-selected="false" data-i18n>Maths</button>
+        </div>
+        <div class="info-body" role="tabpanel">
+          <div class="info-content"></div>
+        </div>
+      </section>
+
+      <!-- Experiments: the tutorial picker, the steps and previous / next -->
+      <section class="lessons" aria-label="Lessons" data-i18n-attr="aria-label">
+        <div class="lesson-head">
+          <button class="tutorial-pick" aria-haspopup="listbox" aria-expanded="false">
+            <span class="tutorial-icon" aria-hidden="true"></span>
+            <span class="tutorial-label"><span data-i18n>Lesson:</span> <span class="tutorial-name">Resistors</span></span>
+            <svg class="tutorial-chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9.5 6 6 6-6" /></svg>
+          </button>
+          <div class="tutorial-menu" role="listbox" aria-label="Lessons" data-i18n-attr="aria-label" hidden></div>
+        </div>
+        <div class="lesson-row">
+          <div class="lesson-scroll">
+            <ol class="lesson-list" id="lesson-list"></ol>
+          </div>
+          <div class="lesson-nav">
+            <button class="lesson-prev" aria-label="Previous lesson" title="Previous lesson ([)" data-i18n-attr="aria-label title">
+              <svg viewBox="0 0 24 24"><path d="m14.5 5.5-6.5 6.5 6.5 6.5" /></svg>
+            </button>
+            <button class="lesson-next" aria-label="Next lesson" title="Next lesson (])" data-i18n-attr="aria-label title">
+              <svg viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5" /></svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer (compact layout; the wide layout keeps these in the side nav) -->
+      <footer class="app-foot">
+        <a class="credit credit-row" href="https://x.com/DilumSanjaya" target="_blank" rel="noopener noreferrer" title="Designed by x.com/DilumSanjaya">
+          <svg class="credit-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.4l-5.8-7.59-6.64 7.59H.47l8.6-9.83L0 1.15h7.6l5.24 6.93zm-1.29 19.5h2.04L6.49 3.24H4.3z" /></svg>
+          <span class="credit-rule" aria-hidden="true"></span>
+          <span class="credit-text"><small data-i18n>Designed by</small><b>x.com/DilumSanjaya</b></span>
+        </a>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://electronics-101-six.vercel.app/sitemap.xml
