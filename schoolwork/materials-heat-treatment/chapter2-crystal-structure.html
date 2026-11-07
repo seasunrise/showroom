@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>金属材料基础知识 · 工程材料及热处理 互动课堂</title>
+  <style>
+    :root {
+      --bg: #0b2547;
+      --bg2: #0e2f5c;
+      --panel: #123a6e;
+      --panel2: #0d2c58;
+      --line: rgba(120, 180, 255, .16);
+      --line2: rgba(120, 180, 255, .32);
+      --ink: #dce9ff;
+      --ink-dim: #9db8dd;
+      --cyan: #5cc8ff;
+      --amber: #ffb02e;
+      --green: #3ddc97;
+      --red: #ff6b6b;
+      --purple: #c39bff;
+      --white: #f4f9ff;
+      --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      --sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box }
+
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100% }
+
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.7;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(120, 180, 255, .05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 180, 255, .05) 1px, transparent 1px),
+        linear-gradient(rgba(120, 180, 255, .028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 180, 255, .028) 1px, transparent 1px),
+        radial-gradient(1200px 600px at 70% -10%, #16407c 0%, var(--bg) 60%);
+      background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px, 100% 100%;
+    }
+
+    a { color: var(--cyan); text-decoration: none }
+    h1, h2, h3 { font-weight: 700; letter-spacing: .04em }
+    button { font-family: var(--sans); cursor: pointer }
+
+    /* ---------- nav ---------- */
+    nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(11, 37, 71, .86);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .nav-inner {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 20px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-brand { font-weight: 700; color: var(--white); font-size: 15px; white-space: nowrap }
+    .nav-brand em { color: var(--cyan); font-style: normal }
+
+    .nav-links { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none }
+    .nav-links::-webkit-scrollbar { display: none }
+
+    .nav-links a {
+      color: var(--ink-dim);
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      white-space: nowrap;
+      transition: .2s;
+    }
+
+    .nav-links a:hover { color: var(--white); background: rgba(92, 200, 255, .12) }
+
+    main { max-width: 1180px; margin: 0 auto; padding: 0 20px }
+    section { padding: 72px 0 24px }
+
+    .kicker {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--cyan);
+      border: 1px solid var(--line2);
+      border-radius: 999px;
+      padding: 4px 14px;
+      margin-bottom: 14px;
+      letter-spacing: .14em;
+    }
+
+    .sec-title { font-size: clamp(24px, 3.4vw, 36px); color: var(--white); margin-bottom: 10px }
+    .sec-sub { color: var(--ink-dim); max-width: 760px; margin-bottom: 30px; font-size: 15px }
+
+    .hero { padding: 130px 0 50px; text-align: center }
+
+    .hero h1 { font-size: clamp(30px, 5.4vw, 54px); color: var(--white); line-height: 1.25 }
+
+    .hero h1 .hl {
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero p { color: var(--ink-dim); max-width: 720px; margin: 18px auto 30px; font-size: 16px }
+
+    .hero-book { display: inline-flex; flex-wrap: wrap; gap: 10px; justify-content: center; font-size: 13px; color: var(--ink-dim) }
+
+    .hero-book span {
+      border: 1px solid var(--line2);
+      background: rgba(18, 58, 110, .5);
+      border-radius: 8px;
+      padding: 6px 14px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(18, 58, 110, .55), rgba(13, 44, 88, .55));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 26px;
+      margin-bottom: 26px;
+    }
+
+    .panel h3 { color: var(--white); font-size: 19px; margin-bottom: 8px }
+    .panel .lead { color: var(--ink-dim); font-size: 14px; margin-bottom: 16px }
+
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px }
+    @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr } }
+
+    .card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 16px }
+
+    .mini-card {
+      background: rgba(11, 37, 71, .55);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 18px;
+    }
+
+    .mini-card h4 { color: var(--white); font-size: 15px; margin-bottom: 6px }
+    .mini-card p { color: var(--ink-dim); font-size: 13px; line-height: 1.6 }
+
+    .callout {
+      border-left: 3px solid var(--amber);
+      background: rgba(255, 176, 46, .08);
+      border-radius: 0 10px 10px 0;
+      padding: 14px 18px;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    .callout.blue { border-color: var(--cyan); background: rgba(92, 200, 255, .08) }
+    .callout.green { border-color: var(--green); background: rgba(61, 220, 151, .08) }
+    .callout b { color: var(--white) }
+
+    .formula {
+      font-family: var(--mono);
+      background: rgba(11, 37, 71, .7);
+      border: 1px solid var(--line2);
+      border-radius: 10px;
+      padding: 12px 18px;
+      display: inline-block;
+      margin: 8px 0;
+      color: var(--white);
+      font-size: 15px;
+    }
+
+    .stage {
+      background: rgba(6, 20, 40, .75);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stage canvas { display: block; width: 100%; height: auto }
+
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 16px }
+
+    .btn {
+      background: linear-gradient(180deg, #2a6cb8, #1b4f8f);
+      color: var(--white);
+      border: 1px solid rgba(120, 180, 255, .4);
+      border-radius: 10px;
+      padding: 9px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      transition: .2s;
+    }
+
+    .btn:hover { filter: brightness(1.15) }
+    .btn.ghost { background: transparent; border-color: var(--line2); color: var(--ink) }
+    .btn.ghost:hover { border-color: var(--cyan); color: var(--cyan) }
+    .btn.active, .btn.ghost.active { background: rgba(92, 200, 255, .15); border-color: var(--cyan); color: var(--cyan); box-shadow: none }
+
+    .readout { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px }
+
+    .readout .chip {
+      font-family: var(--mono);
+      font-size: 12.5px;
+      background: rgba(11, 37, 71, .7);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: var(--ink-dim);
+    }
+
+    .readout .chip b { color: var(--white); font-weight: 600 }
+    .readout .chip .c-cyan { color: var(--cyan) }
+    .readout .chip .c-amber { color: var(--amber) }
+    .readout .chip .c-green { color: var(--green) }
+    .readout .chip .c-red { color: var(--red) }
+
+    .slider-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 90px;
+      gap: 12px;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    .slider-row label { color: var(--ink-dim) }
+    .slider-row output { font-family: var(--mono); color: var(--white); text-align: right; font-size: 13px }
+
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: rgba(120, 180, 255, .22);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: var(--cyan);
+      border: 2px solid var(--white);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--cyan); border: 2px solid var(--white); cursor: pointer;
+    }
+
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px }
+
+    .tab {
+      background: transparent;
+      border: 1px solid var(--line2);
+      color: var(--ink-dim);
+      border-radius: 10px;
+      padding: 8px 18px;
+      font-size: 14px;
+      transition: .2s;
+    }
+
+    .tab.active { background: rgba(92, 200, 255, .15); color: var(--cyan); border-color: var(--cyan) }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 14px }
+
+    th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top }
+
+    th { background: rgba(18, 58, 110, .7); color: var(--white); font-weight: 600 }
+    td { color: var(--ink-dim) }
+    td b { color: var(--ink) }
+
+    .quiz-q { margin-bottom: 22px }
+    .quiz-q .q { color: var(--white); font-weight: 600; margin-bottom: 10px; font-size: 15px }
+    .quiz-q .q .num { color: var(--cyan); font-family: var(--mono); margin-right: 8px }
+    .opts { display: grid; gap: 8px }
+
+    .opt {
+      text-align: left;
+      background: rgba(11, 37, 71, .55);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 14px;
+      transition: .2s;
+    }
+
+    .opt:hover { border-color: var(--line2) }
+    .opt.right { border-color: var(--green); background: rgba(61, 220, 151, .12) }
+    .opt.wrong { border-color: var(--red); background: rgba(255, 107, 107, .12) }
+    .quiz-exp { font-size: 13px; color: var(--ink-dim); margin-top: 8px; display: none }
+    .quiz-exp.show { display: block }
+
+    footer {
+      border-top: 1px solid var(--line);
+      margin-top: 70px;
+      padding: 30px 20px 50px;
+      text-align: center;
+      color: var(--ink-dim);
+      font-size: 13px;
+    }
+
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .7s, transform .7s }
+    .reveal.vis { opacity: 1; transform: none }
+
+    .zone-hint { font-size: 12.5px; color: var(--ink-dim); text-align: center; margin-top: 8px }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="nav-inner">
+      <a class="nav-brand" href="./index.html" style="color:var(--white)">工程材料及热处理 <em>·</em> 第2章 金属材料基础</a>
+      <div class="nav-links">
+        <a href="#s1">§1 理想晶体结构</a>
+        <a href="#s2">§2 实际晶体构造</a>
+        <a href="#s3">§3 结晶过程</a>
+        <a href="#s4">§4 铸锭组织</a>
+        <a href="#quiz">自测</a>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ================= HERO ================= -->
+    <header class="hero">
+      <div class="kicker">第 2 章 · 互动课堂</div>
+      <h1>金属材料基础知识<br>钻进<span class="hl">原子排列</span>的世界看一看</h1>
+      <p>金属为什么有固定熔点？为什么实际强度远低于理论值？液态金属怎样长成一颗颗晶粒？转动晶胞、推动位错、模拟结晶——本章全部可上手。</p>
+      <div class="hero-book">
+        <span>教材：工程材料及热处理</span>
+        <span>航空工业出版社 · 第一版</span>
+        <span>§1 理想晶体 · §2 实际构造 · §3 结晶 · §4 铸锭</span>
+      </div>
+    </header>
+
+    <!-- ================= §1 理想晶体结构 ================= -->
+    <section id="s1" class="reveal">
+      <div class="kicker">第 1 节</div>
+      <h2 class="sec-title">金属的理想晶体结构</h2>
+      <p class="sec-sub">一切固态物质按原子（或分子）排列是否规则，分为<b style="color:var(--white)">晶体</b>和<b style="color:var(--white)">非晶体</b>两大类。金属都是晶体。</p>
+
+      <div class="panel">
+        <h3>晶体 vs 非晶体：看一眼原子排列就明白</h3>
+        <p class="lead">下面两块"材料"的原子都在不停热振动，但排列方式截然不同。</p>
+        <div class="grid2">
+          <div>
+            <div class="stage"><canvas id="crystalCv" width="520" height="240"></canvas></div>
+            <p class="zone-hint">晶体：原子<b style="color:var(--cyan)">长程有序</b>规则排列</p>
+          </div>
+          <div>
+            <div class="stage"><canvas id="amorphCv" width="520" height="240"></canvas></div>
+            <p class="zone-hint">非晶体：原子<b style="color:var(--amber)">无序堆积</b>（仅短程有序）</p>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th></th><th>晶体（金属）</th><th>非晶体（玻璃、松香）</th></tr></thead>
+          <tbody>
+            <tr><td><b>原子排列</b></td><td>长程有序、规则周期排列</td><td>仅短程有序，长程无序</td></tr>
+            <tr><td><b>熔点</b></td><td><b>有固定熔点</b>（如纯铁 1538℃）</td><td>无固定熔点，逐渐软化</td></tr>
+            <tr><td><b>性能方向性</b></td><td>单晶体呈<b>各向异性</b></td><td>各向同性</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel">
+        <h3>三个基本概念：晶格 · 晶胞 · 晶格常数</h3>
+        <div class="card-row">
+          <div class="mini-card">
+            <h4>晶格</h4>
+            <p>把原子抽象成几何点，用假想直线连接起来形成的<b style="color:var(--ink)">空间格架</b>，用来描述原子排列规律。</p>
+          </div>
+          <div class="mini-card">
+            <h4>晶胞</h4>
+            <p>晶格中能完全代表晶格特征的<b style="color:var(--ink)">最小几何单元</b>。晶胞不断重复堆砌，就构成整块晶体。</p>
+          </div>
+          <div class="mini-card">
+            <h4>晶格常数</h4>
+            <p>晶胞的棱边长度 a、b、c，单位通常为 Å（10⁻¹⁰ m）。它决定了原子间的实际距离。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>常见金属晶格类型：转一转这三种晶胞</h3>
+        <p class="lead">绝大多数金属属于三种晶格。点击切换，拖动可以旋转晶胞，数一数原子各在什么位置。</p>
+
+        <div class="tabs" id="latticeTabs">
+          <button class="tab active" data-l="bcc">体心立方 BCC</button>
+          <button class="tab" data-l="fcc">面心立方 FCC</button>
+          <button class="tab" data-l="hcp">密排六方 HCP</button>
+        </div>
+
+        <div class="grid2">
+          <div class="stage" style="cursor:grab"><canvas id="latticeCv" width="560" height="380"></canvas></div>
+          <div id="latticeInfo"></div>
+        </div>
+
+        <table>
+          <thead><tr><th>晶格类型</th><th>晶胞原子数</th><th>原子位置</th><th>典型金属</th></tr></thead>
+          <tbody>
+            <tr><td><b>体心立方 BCC</b></td><td>2</td><td>8 个角 + 体心 1 个</td><td>α-Fe（912℃以下的铁）、Cr、W、Mo</td></tr>
+            <tr><td><b>面心立方 FCC</b></td><td>4</td><td>8 个角 + 6 个面心</td><td>γ-Fe、Al、Cu、Ni、Pb</td></tr>
+            <tr><td><b>密排六方 HCP</b></td><td>6</td><td>六方柱角、上下底面心 + 中层 3 个</td><td>Mg、Zn、Be、α-Ti</td></tr>
+          </tbody>
+        </table>
+
+        <div class="callout green">
+          <b>为什么重要：</b>晶格类型直接决定金属性能——FCC 的铝、铜塑性好易变形；HCP 的镁、锌塑性较差。铁在 912℃ 前后会在 BCC(α-Fe) 与 FCC(γ-Fe) 之间转变，这正是<b>钢铁能进行热处理</b>的结构基础。
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= §2 实际晶体构造 ================= -->
+    <section id="s2" class="reveal">
+      <div class="kicker">第 2 节</div>
+      <h2 class="sec-title">金属晶体的实际构造</h2>
+      <p class="sec-sub">理想单晶体只是模型。实际金属由无数小晶体拼成，内部还存在各种缺陷——而这些"不完美"，恰恰主宰着金属的真实性能。</p>
+
+      <div class="panel">
+        <h3>多晶体组织：无数"小晶体"的拼图</h3>
+        <p class="lead">实际金属由许多外形不规则的小晶体——<b style="color:var(--white)">晶粒</b>组成，晶粒之间的界面叫<b style="color:var(--white)">晶界</b>。每颗晶粒内部晶格位向一致，但晶粒之间位向各不相同（注意每颗晶粒里的线条方向）。点「重新生成」换一块"金属"。</p>
+        <div class="stage"><canvas id="polyCv" width="1100" height="380"></canvas></div>
+        <div class="controls">
+          <button class="btn ghost" id="polyRegen">↺ 重新生成一块金属</button>
+        </div>
+        <div class="callout blue">
+          <b>各向异性的"消失"：</b>单晶体各向异性，但多晶体中无数晶粒位向随机，各方向性能互相抵消，所以实际金属宏观上表现为<b>各向同性</b>（伪各向同性）。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>晶体缺陷：金属不完美的三种尺度</h3>
+        <div class="tabs" id="defectTabs">
+          <button class="tab active" data-d="point">点缺陷</button>
+          <button class="tab" data-d="line">线缺陷（位错）</button>
+          <button class="tab" data-d="plane">面缺陷（晶界）</button>
+        </div>
+        <div class="grid2">
+          <div class="stage"><canvas id="defectCv" width="560" height="320"></canvas></div>
+          <div id="defectInfo"></div>
+        </div>
+        <div class="callout">
+          <b>缺陷≠坏事：</b>点缺陷引起晶格畸变使强度提高；位错的存在解释了为什么金属实际强度远低于理论值，塑性变形正是<b>位错滑移</b>的结果；晶界阻碍位错运动，所以<b>晶粒越细，强度越高</b>（细晶强化）。
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= §3 结晶过程 ================= -->
+    <section id="s3" class="reveal">
+      <div class="kicker">第 3 节</div>
+      <h2 class="sec-title">纯金属的结晶过程</h2>
+      <p class="sec-sub">液态金属冷却到熔点以下转变为固态晶体的过程叫<b style="color:var(--white)">结晶</b>。结晶的组织状态，直接决定铸件的先天质量。</p>
+
+      <div class="panel">
+        <h3>冷却曲线：熔点处的"神秘平台"</h3>
+        <p class="lead">记录液态纯金属的温度随时间变化。点「开始冷却」，观察温度降到熔点附近时出现的两个关键现象：<b style="color:var(--white)">过冷</b>与<b style="color:var(--white)">结晶平台</b>。</p>
+        <div class="grid2">
+          <div class="stage"><canvas id="coolCv" width="560" height="330"></canvas></div>
+          <div>
+            <h4 style="color:var(--white);font-size:15px;margin-bottom:8px">曲线上的两个考点</h4>
+            <p style="color:var(--ink-dim);font-size:13.5px">
+              <b style="color:var(--ink)">① 过冷现象：</b>实际结晶温度 Tn 总是低于理论熔点 T₀，差值 ΔT = T₀ − Tn 叫<b style="color:var(--ink)">过冷度</b>。冷却越快，过冷度越大。<br><br>
+              <b style="color:var(--ink)">② 结晶平台：</b>结晶时释放<b style="color:var(--ink)">结晶潜热</b>，补偿了散失的热量，温度保持不变，曲线出现水平段。结晶结束后温度继续下降。
+            </p>
+            <div class="controls">
+              <button class="btn" id="coolPlay">▶ 开始冷却</button>
+              <button class="btn ghost" id="coolReset">↺ 重置</button>
+            </div>
+            <div class="readout">
+              <span class="chip">理论熔点 <b class="c-amber">T₀</b></span>
+              <span class="chip">实际结晶温度 <b class="c-cyan">Tn</b></span>
+              <span class="chip">过冷度 <b class="c-green">ΔT = T₀ − Tn</b></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>结晶模拟器：晶核生成 → 长大 → 相遇成晶界</h3>
+        <p class="lead">结晶是<b style="color:var(--white)">形核与长大</b>的过程：液体中先出现微小晶核，晶核不断吞并周围液体长大（实际呈树枝状生长），相邻晶体相遇处便形成晶界。拖一下过冷度滑块再「开始结晶」，看最终晶粒粗细的差别。</p>
+
+        <div class="slider-row">
+          <label>过冷度 ΔT</label>
+          <input type="range" id="nuclRate" min="1" max="3" step="1" value="2">
+          <output id="nuclRateOut">中等</output>
+        </div>
+
+        <div class="stage"><canvas id="nuclCv" width="1100" height="400"></canvas></div>
+
+        <div class="controls">
+          <button class="btn" id="nuclPlay">▶ 开始结晶</button>
+          <button class="btn ghost" id="nuclReset">↺ 重新熔化</button>
+        </div>
+        <div class="readout">
+          <span class="chip">晶核数 <b class="c-cyan" id="nuclCount">0</b></span>
+          <span class="chip">结晶进度 <b class="c-green" id="nuclProg">0%</b></span>
+          <span class="chip" id="nuclJudge">等待结晶…</span>
+        </div>
+
+        <div class="callout green">
+          <b>规律：</b>过冷度越大，形核率 N 远大于长大速度 G，N/G 比值越大 → 晶粒越细小。对比三次模拟的晶核数和晶粒大小，你就掌握了<b>细晶强化</b>的工艺源头。
+        </div>
+
+        <h4 style="color:var(--white);font-size:15px;margin:16px 0 8px">控制晶粒大小的三大工艺手段</h4>
+        <div class="card-row">
+          <div class="mini-card">
+            <h4>① 增大过冷度</h4>
+            <p>提高冷却速度（如金属型铸造代替砂型），形核率剧增，获得细晶粒。</p>
+          </div>
+          <div class="mini-card">
+            <h4>② 变质处理</h4>
+            <p>浇注前向液体加入变质剂（孕育剂），人为制造大量<b style="color:var(--ink)">非自发晶核</b>。</p>
+          </div>
+          <div class="mini-card">
+            <h4>③ 附加振动</h4>
+            <p>机械振动、超声、电磁搅拌等，打碎正在长大的树枝晶，增加晶核数目。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= §4 铸锭组织 ================= -->
+    <section id="s4" class="reveal">
+      <div class="kicker">第 4 节</div>
+      <h2 class="sec-title">铸锭组织：一个钢锭里的三个世界</h2>
+      <p class="sec-sub">钢水注入锭模后，从外到内散热条件不同，凝固出的铸锭截面上呈现<b style="color:var(--white)">三个截然不同的晶粒区</b>。点击截面图上的不同区域看看。</p>
+
+      <div class="panel">
+        <div class="grid2">
+          <div>
+            <div class="stage" style="cursor:pointer"><canvas id="ingotCv" width="520" height="420"></canvas></div>
+            <p class="zone-hint">点击铸锭截面的三个晶粒区</p>
+          </div>
+          <div id="ingotInfo">
+            <h4 style="color:var(--white);font-size:15px;margin-bottom:8px">铸锭组织三区</h4>
+            <p style="color:var(--ink-dim);font-size:13.5px">从表面到心部依次是：<b style="color:var(--cyan)">表面细晶粒层</b> → <b style="color:var(--amber)">柱状晶粒层</b> → <b style="color:var(--green)">中心等轴晶粒层</b>。点击左侧截面图，了解每一层的成因与性能特点。</p>
+          </div>
+        </div>
+        <table>
+          <thead><tr><th>晶粒区</th><th>成因</th><th>组织与性能特点</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><b>表面细晶粒层</b>（激冷层）</td>
+              <td>钢水接触低温模壁，过冷度极大，形核率极高</td>
+              <td>细小等轴晶，组织致密，但厚度很薄，对整体性能影响小</td>
+            </tr>
+            <tr>
+              <td><b>柱状晶粒层</b></td>
+              <td>垂直于模壁方向散热最快，晶粒沿散热反方向择优定向生长</td>
+              <td>组织致密；但柱状晶交界处（尤其是锭的对角线）杂质富集、结合弱，<b>锻造时易沿此处开裂</b></td>
+            </tr>
+            <tr>
+              <td><b>中心等轴晶粒层</b></td>
+              <td>心部散热失去方向性，剩余钢水几乎同时到达结晶温度，均匀形核</td>
+              <td>粗大等轴晶；最后凝固，常伴随<b>缩孔、疏松和杂质偏析</b>，是铸锭质量最差的区域</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout">
+          <b>工程启示：</b>铸锭的性能不均与缺陷（缩孔、偏析）需要通过后续的<b>锻造、轧制</b>来破碎和压实——这也解释了为什么重要零件要用锻件而不是直接用铸件。
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= 自测 ================= -->
+    <section id="quiz" class="reveal">
+      <div class="kicker">随堂自测</div>
+      <h2 class="sec-title">三十道题，检验一下</h2>
+      <p class="sec-sub">点击选项即可判分，答错会给出提示。</p>
+      <div class="panel" id="quizBox"></div>
+    </section>
+  </main>
+
+  <footer>
+    <a href="./index.html">← 返回课程目录</a> ｜ <a href="./chapter1-mechanical-properties.html">上一章：材料的力学性能</a><br><br>
+    工程材料及热处理 · 第 2 章 金属材料基础知识 · 互动课堂<br>
+    仅供学习交流 · 航空工业出版社《工程材料及热处理》配套知识点整理
+  </footer>
+
+  <script>
+    /* ============================================================
+       公共工具
+    ============================================================ */
+    const $ = s => document.querySelector(s);
+    const $$ = s => [...document.querySelectorAll(s)];
+
+    const io = new IntersectionObserver(es => es.forEach(e => {
+      if (e.isIntersecting) { e.target.classList.add('vis'); io.unobserve(e.target); }
+    }), { threshold: .12 });
+    $$('.reveal').forEach(el => io.observe(el));
+
+    function fitCanvas(cv) {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = cv.getBoundingClientRect().width;
+      const h = cv.height / cv.width * w;
+      cv.width = w * dpr; cv.style.height = h + 'px';
+      cv.height = h * dpr;
+      const ctx = cv.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return { ctx, W: w, H: h };
+    }
+
+    function drawAtom(ctx, x, y, r, color) {
+      const g = ctx.createRadialGradient(x - r * .35, y - r * .35, r * .1, x, y, r);
+      g.addColorStop(0, '#ffffff');
+      g.addColorStop(0.25, color);
+      g.addColorStop(1, 'rgba(10,30,60,.9)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    }
+
+    /* ============================================================
+       §1 晶体 vs 非晶体（原子热振动）
+    ============================================================ */
+    (function atomsDemo() {
+      const cv1 = $('#crystalCv'), cv2 = $('#amorphCv');
+      let t = 0;
+      // 预生成非晶体原子位置
+      const amorph = [];
+      for (let i = 0; i < 90; i++) amorph.push([Math.random(), Math.random(), Math.random() * Math.PI * 2]);
+
+      function draw() {
+        t += 0.05;
+        // 晶体：规则网格 + 微振动
+        {
+          const { ctx, W, H } = fitCanvas(cv1);
+          ctx.clearRect(0, 0, W, H);
+          const nx = 11, ny = 6, spx = W / (nx + 1), spy = H / (ny + 1);
+          ctx.strokeStyle = 'rgba(92,200,255,.18)'; ctx.lineWidth = 1;
+          for (let i = 1; i <= nx; i++) { ctx.beginPath(); ctx.moveTo(i * spx, 0); ctx.lineTo(i * spx, H); ctx.stroke(); }
+          for (let j = 1; j <= ny; j++) { ctx.beginPath(); ctx.moveTo(0, j * spy); ctx.lineTo(W, j * spy); ctx.stroke(); }
+          for (let i = 1; i <= nx; i++) for (let j = 1; j <= ny; j++) {
+            const dx = Math.sin(t + i * 1.3 + j * 2.1) * 2, dy = Math.cos(t * 1.2 + i + j) * 2;
+            drawAtom(ctx, i * spx + dx, j * spy + dy, 7, '#5cc8ff');
+          }
+        }
+        // 非晶体：随机位置 + 微振动
+        {
+          const { ctx, W, H } = fitCanvas(cv2);
+          ctx.clearRect(0, 0, W, H);
+          amorph.forEach(([fx, fy, ph]) => {
+            const dx = Math.sin(t + ph) * 2.5, dy = Math.cos(t * 1.1 + ph * 2) * 2.5;
+            drawAtom(ctx, fx * W + dx, fy * H + dy, 7, '#ffb02e');
+          });
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    /* ============================================================
+       §1 3D 晶格旋转
+    ============================================================ */
+    (function latticeDemo() {
+      const cv = $('#latticeCv');
+      const LATT = {
+        bcc: {
+          name: '体心立方 BCC', color: '#5cc8ff',
+          info: '<h4 style="color:var(--white);font-size:16px;margin-bottom:8px">体心立方 BCC</h4>'
+            + '<p style="color:var(--ink-dim);font-size:13.5px">立方体的 <b style="color:var(--ink)">8 个顶角</b>各有 1 个原子（每个被 8 个晶胞共享，计 1 个），<b style="color:var(--ink)">体心</b>独有 1 个 → 晶胞原子数 = 8×1/8 + 1 = <b style="color:var(--cyan)">2</b>。</p>'
+            + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">典型金属：<b style="color:var(--ink)">α-Fe、Cr、W、Mo</b>。912℃ 以下的纯铁就是它。</p>',
+          atoms: null, edges: null
+        },
+        fcc: {
+          name: '面心立方 FCC', color: '#3ddc97',
+          info: '<h4 style="color:var(--white);font-size:16px;margin-bottom:8px">面心立方 FCC</h4>'
+            + '<p style="color:var(--ink-dim);font-size:13.5px">8 个顶角 + <b style="color:var(--ink)">6 个面心</b>（每个面心被 2 个晶胞共享）→ 原子数 = 8×1/8 + 6×1/2 = <b style="color:var(--cyan)">4</b>。</p>'
+            + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">典型金属：<b style="color:var(--ink)">γ-Fe、Al、Cu、Ni</b>。滑移系多，塑性普遍较好。</p>',
+          atoms: null, edges: null
+        },
+        hcp: {
+          name: '密排六方 HCP', color: '#c39bff',
+          info: '<h4 style="color:var(--white);font-size:16px;margin-bottom:8px">密排六方 HCP</h4>'
+            + '<p style="color:var(--ink-dim);font-size:13.5px">六方棱柱：12 个顶角（各被 6 个晶胞共享）+ 上下底面心 2 个（各被 2 个共享）+ <b style="color:var(--ink)">中层内部 3 个</b> → 原子数 = 12×1/6 + 2×1/2 + 3 = <b style="color:var(--cyan)">6</b>。</p>'
+            + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">典型金属：<b style="color:var(--ink)">Mg、Zn、α-Ti</b>。滑移系少，塑性较差。</p>',
+          atoms: null, edges: null
+        }
+      };
+
+      // 立方晶胞原子与棱
+      function cubicAtoms(faceCenters, bodyCenter) {
+        const a = [];
+        for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) a.push([x, y, z]);
+        if (bodyCenter) a.push([0, 0, 0]);
+        if (faceCenters) [[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]].forEach(p => a.push(p));
+        return a;
+      }
+      const cubeEdges = [];
+      for (const [a, b] of [[-1,-1,-1],[1,-1,-1],[-1,1,-1],[1,1,-1],[-1,-1,1],[1,-1,1],[-1,1,1],[1,1,1]]) void 0;
+      // 立方体 12 条棱
+      const cv8 = [];
+      for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) cv8.push([x, y, z]);
+      cv8.forEach((p, i) => cv8.forEach((q, j) => {
+        if (j > i && p.filter((v, k) => v !== q[k]).length === 1) cubeEdges.push([p, q]);
+      }));
+
+      LATT.bcc.atoms = cubicAtoms(false, true); LATT.bcc.edges = cubeEdges;
+      LATT.fcc.atoms = cubicAtoms(true, false); LATT.fcc.edges = cubeEdges;
+
+      // 六方棱柱
+      {
+        const R = 1.05, h = 1.55, atoms = [], edges = [];
+        const hex = s => Array.from({ length: 6 }, (_, i) => {
+          const a = Math.PI / 6 + i * Math.PI / 3;
+          return [R * Math.cos(a), s * h, R * Math.sin(a)];
+        });
+        const top = hex(1), bot = hex(-1);
+        atoms.push(...top, ...bot, [0, h, 0], [0, -h, 0]);
+        // 中层 3 个原子
+        for (let i = 0; i < 3; i++) {
+          const a = Math.PI / 6 + (i * 2 + 0.5) * Math.PI / 3 * 2 * 0.5;
+        }
+        [[0.55, 0.55 * 0.5], [-0.55, 0.55 * 0.5], [0, -0.62]].forEach(([x, z]) => atoms.push([x, 0, z]));
+        for (let i = 0; i < 6; i++) {
+          edges.push([top[i], top[(i + 1) % 6]]);
+          edges.push([bot[i], bot[(i + 1) % 6]]);
+          edges.push([top[i], bot[i]]);
+        }
+        LATT.hcp.atoms = atoms; LATT.hcp.edges = edges;
+      }
+
+      let cur = 'bcc', rotY = 0.6, rotX = -0.35, auto = true, dragging = false, lastX = 0, lastY = 0;
+
+      function project(p, cx, cy, S) {
+        const [x, y, z] = p;
+        const cosy = Math.cos(rotY), siny = Math.sin(rotY);
+        const cosx = Math.cos(rotX), sinx = Math.sin(rotX);
+        const x1 = x * cosy + z * siny;
+        const z1 = -x * siny + z * cosy;
+        const y1 = y * cosx - z1 * sinx;
+        const z2 = y * sinx + z1 * cosx;
+        const persp = 3.2 / (3.2 + z2);
+        return [cx + x1 * S * persp, cy - y1 * S * persp, z2];
+      }
+
+      function draw() {
+        const { ctx, W, H } = fitCanvas(cv);
+        ctx.clearRect(0, 0, W, H);
+        const d = LATT[cur];
+        const cx = W / 2, cy = H / 2 + 8, S = Math.min(W, H) / 5.2;
+
+        // 棱
+        ctx.strokeStyle = 'rgba(157,184,221,.55)'; ctx.lineWidth = 1.4;
+        d.edges.forEach(([p, q]) => {
+          const [x1, y1] = project(p, cx, cy, S), [x2, y2] = project(q, cx, cy, S);
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        });
+        // 原子（按深度排序，远的先画）
+        const proj = d.atoms.map(p => project(p, cx, cy, S));
+        proj.sort((a, b) => b[2] - a[2]);
+        proj.forEach(([x, y, z]) => {
+          const r = 15 * (3.2 / (3.2 + z));
+          drawAtom(ctx, x, y, r, d.color);
+        });
+
+        ctx.fillStyle = '#9db8dd'; ctx.font = '12px PingFang SC';
+        ctx.fillText(d.name + ' · 拖动旋转', 14, 22);
+      }
+
+      function loop() {
+        if (auto && !dragging) rotY += 0.008;
+        draw();
+        requestAnimationFrame(loop);
+      }
+
+      cv.addEventListener('pointerdown', e => { dragging = true; lastX = e.clientX; lastY = e.clientY; cv.setPointerCapture(e.pointerId); });
+      cv.addEventListener('pointermove', e => {
+        if (!dragging) return;
+        rotY += (e.clientX - lastX) * 0.01;
+        rotX += (e.clientY - lastY) * 0.01;
+        rotX = Math.max(-1.2, Math.min(1.2, rotX));
+        lastX = e.clientX; lastY = e.clientY;
+      });
+      cv.addEventListener('pointerup', () => dragging = false);
+
+      $$('#latticeTabs .tab').forEach(b => b.addEventListener('click', () => {
+        $$('#latticeTabs .tab').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        cur = b.dataset.l;
+        $('#latticeInfo').innerHTML = LATT[cur].info;
+      }));
+      $('#latticeInfo').innerHTML = LATT.bcc.info;
+      loop();
+    })();
+
+    /* ============================================================
+       §2 多晶体组织（Voronoi 晶粒）
+    ============================================================ */
+    (function polyDemo() {
+      const cv = $('#polyCv');
+      const HUES = [200, 160, 35, 280, 340, 90, 210, 180, 20, 300];
+
+      function gen() {
+        const { ctx, W, H } = fitCanvas(cv);
+        ctx.clearRect(0, 0, W, H);
+        const N = 26;
+        const seeds = [];
+        for (let i = 0; i < N; i++) seeds.push({
+          x: Math.random() * W, y: Math.random() * H,
+          hue: HUES[i % HUES.length], ang: Math.random() * Math.PI
+        });
+
+        // 粗网格 Voronoi 填色
+        const step = 3;
+        const img = ctx.createImageData(W, H);
+        for (let py = 0; py < H; py += step) {
+          for (let px = 0; px < W; px += step) {
+            let best = 0, bd = 1e9;
+            for (let i = 0; i < N; i++) {
+              const dx = px - seeds[i].x, dy = py - seeds[i].y, d = dx * dx + dy * dy;
+              if (d < bd) { bd = d; best = i; }
+            }
+            const s = seeds[best];
+            // 底色：深蓝带一点色相
+            const [r, g, b] = hsl(s.hue, 45, 26);
+            for (let yy = 0; yy < step; yy++) for (let xx = 0; xx < step; xx++) {
+              const idx = ((py + yy) * W + px + xx) * 4;
+              img.data[idx] = r; img.data[idx + 1] = g; img.data[idx + 2] = b; img.data[idx + 3] = 255;
+            }
+          }
+        }
+        ctx.putImageData(img, 0, 0);
+
+        // 晶界：检测相邻格点归属不同 → 画点
+        ctx.fillStyle = 'rgba(220,235,255,.75)';
+        for (let py = step; py < H - step; py += step) {
+          for (let px = step; px < W - step; px += step) {
+            const a = owner(px, py, seeds), b = owner(px + step, py, seeds), c = owner(px, py + step, seeds);
+            if (a !== b || a !== c) ctx.fillRect(px, py, 1.6, 1.6);
+          }
+        }
+
+        // 每个晶粒内画位向线（示意晶格方向不同）
+        seeds.forEach(s => {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(220,235,255,.28)'; ctx.lineWidth = 1;
+          const len = 26;
+          for (let k = -2; k <= 2; k++) {
+            const ox = Math.cos(s.ang + Math.PI / 2) * k * 8, oy = Math.sin(s.ang + Math.PI / 2) * k * 8;
+            ctx.beginPath();
+            ctx.moveTo(s.x + ox - Math.cos(s.ang) * len / 2, s.y + oy - Math.sin(s.ang) * len / 2);
+            ctx.lineTo(s.x + ox + Math.cos(s.ang) * len / 2, s.y + oy + Math.sin(s.ang) * len / 2);
+            ctx.stroke();
+          }
+          ctx.restore();
+        });
+      }
+
+      function owner(x, y, seeds) {
+        let best = 0, bd = 1e9;
+        for (let i = 0; i < seeds.length; i++) {
+          const dx = x - seeds[i].x, dy = y - seeds[i].y, d = dx * dx + dy * dy;
+          if (d < bd) { bd = d; best = i; }
+        }
+        return best;
+      }
+
+      function hsl(h, s, l) {
+        s /= 100; l /= 100;
+        const k = n => (n + h / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+        return [f(0) * 255, f(8) * 255, f(4) * 255].map(Math.round);
+      }
+
+      $('#polyRegen').addEventListener('click', gen);
+      window.addEventListener('resize', gen);
+      gen();
+    })();
+
+    /* ============================================================
+       §2 晶体缺陷
+    ============================================================ */
+    (function defectDemo() {
+      const cv = $('#defectCv');
+      const INFO = {
+        point: '<h4 style="color:var(--white);font-size:16px;margin-bottom:8px">点缺陷（零维）</h4>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px">晶格中某个原子尺度上的"错位"：<br>'
+          + '· <b style="color:var(--red)">空位</b>——该有原子的位置空着<br>'
+          + '· <b style="color:var(--amber)">间隙原子</b>——原子挤进晶格间隙<br>'
+          + '· <b style="color:var(--purple)">置换原子</b>——外来原子占了晶格结点</p>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">点缺陷造成周围<b style="color:var(--ink)">晶格畸变</b>，使强度、硬度升高，电阻增大。固溶强化就靠它。</p>',
+        line: '<h4 style="color:var(--white);font-size:16px;margin-bottom:8px">线缺陷：刃型位错</h4>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px">晶体的上半部分多插入了<b style="color:var(--ink)">半个原子面</b>（注意 ⊥ 符号处），像地毯里的一条褶皱。在切应力推动下，位错线逐步滑过晶体——这正是动画里演示的<b style="color:var(--ink)">位错滑移</b>。</p>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">金属的塑性变形本质上就是大量位错的滑移；位错越多、互相缠结越严重，继续变形越困难——这就是<b style="color:var(--ink)">加工硬化</b>。</p>',
+        plane: '<h4 style="color:var(--white);font-size:16px;margin-bottom:8px">面缺陷：晶界与亚晶界</h4>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px">两颗粒位不同的晶粒相遇，原子在交界处无法完美对接，形成几个原子厚度的<b style="color:var(--ink)">过渡带——晶界</b>（图中亮色区域）。</p>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">晶界原子排列紊乱、能量高：常温下<b style="color:var(--ink)">阻碍位错运动</b>（细晶强化），熔点低、易腐蚀、易富集杂质。</p>'
+      };
+      let cur = 'point', disl = 7, slipT = null, slipped = 0;
+
+      function drawPoint(ctx, W, H) {
+        const nx = 12, ny = 8, spx = W / (nx + 1), spy = H / (ny + 1);
+        for (let i = 1; i <= nx; i++) for (let j = 1; j <= ny; j++) {
+          const x = i * spx, y = j * spy;
+          if (i === 4 && j === 3) {
+            // 空位
+            ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 1.6; ctx.setLineDash([3, 3]);
+            ctx.beginPath(); ctx.arc(x, y, 9, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle = '#ff6b6b'; ctx.font = '10px PingFang SC'; ctx.fillText('空位', x - 10, y + 22);
+            continue;
+          }
+          if (i === 8 && j === 5) { drawAtom(ctx, x, y, 9, '#c39bff'); ctx.fillStyle = '#c39bff'; ctx.font = '10px PingFang SC'; ctx.fillText('置换原子', x - 20, y + 24); continue; }
+          drawAtom(ctx, x, y, 8, '#5cc8ff');
+        }
+        // 间隙原子
+        const gx = 9 * spx + spx / 2, gy = 2 * spy + spy / 2;
+        drawAtom(ctx, gx, gy, 5.5, '#ffb02e');
+        ctx.fillStyle = '#ffb02e'; ctx.font = '10px PingFang SC'; ctx.fillText('间隙原子', gx - 20, gy - 12);
+      }
+
+      function drawLine(ctx, W, H) {
+        const ny = 9, nx = 15, spx = W / (nx + 2), spy = H / (ny + 2);
+        const midRow = Math.ceil(ny / 2);
+        const c = disl; // 位错所在列
+        for (let i = 0; i <= nx; i++) for (let j = 1; j <= ny; j++) {
+          let x = (i + 1) * spx, y = j * spy;
+          if (slipped > 0 && j <= midRow) x += spx * slipped; // 已滑移后的台阶
+          if (j <= midRow && slipped === 0) {
+            // 上半部分：位错附近挤压/拉伸畸变
+            const dd = i - c;
+            x += Math.sign(dd) * Math.exp(-dd * dd / 6) * spx * 0.32;
+          }
+          const near = (i === Math.round(c) && j <= midRow + 1 && j >= midRow - 1);
+          drawAtom(ctx, x, y, 8, near ? '#ffb02e' : '#5cc8ff');
+        }
+        if (slipped === 0) {
+          // ⊥ 符号
+          const sx = (c + 1) * spx, sy = (midRow + 0.5) * spy;
+          ctx.strokeStyle = '#ff6b6b'; ctx.lineWidth = 2.4;
+          ctx.beginPath(); ctx.moveTo(sx, sy - spy * 0.9); ctx.lineTo(sx, sy); ctx.moveTo(sx - 9, sy); ctx.lineTo(sx + 9, sy); ctx.stroke();
+          ctx.fillStyle = '#ff6b6b'; ctx.font = '11px PingFang SC'; ctx.fillText('多余半原子面（位错线 ⊥）', sx + 14, sy + 4);
+          // 切应力箭头
+          ctx.strokeStyle = '#3ddc97'; ctx.fillStyle = '#3ddc97'; ctx.lineWidth = 2.5;
+          ctx.beginPath(); ctx.moveTo(20, 24); ctx.lineTo(70, 24); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(70, 24); ctx.lineTo(60, 19); ctx.lineTo(60, 29); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(W - 20, H - 24); ctx.lineTo(W - 70, H - 24); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(W - 70, H - 24); ctx.lineTo(W - 60, H - 29); ctx.lineTo(W - 60, H - 19); ctx.fill();
+          ctx.font = '12px PingFang SC'; ctx.fillText('τ', 76, 28); ctx.fillText('τ', W - 90, H - 20);
+        } else {
+          ctx.fillStyle = '#3ddc97'; ctx.font = '12.5px PingFang SC';
+          ctx.fillText('位错已滑出晶体 → 表面留下一个原子间距的滑移台阶！', 20, 26);
+        }
+      }
+
+      function drawPlane(ctx, W, H) {
+        const sp = 30, tilt = 0.42;
+        // 左晶粒
+        for (let i = -2; i < 20; i++) for (let j = -1; j < 14; j++) {
+          let x = i * sp, y = j * sp * 0.92;
+          const xr = x * Math.cos(-tilt) - y * Math.sin(-tilt) + W * 0.24;
+          const yr = x * Math.sin(-tilt) + y * Math.cos(-tilt) + H * 0.1;
+          if (xr < -20 || xr > W * 0.52 || yr < -20 || yr > H + 20) continue;
+          drawAtom(ctx, xr, yr, 8, '#5cc8ff');
+        }
+        // 右晶粒
+        for (let i = -2; i < 20; i++) for (let j = -1; j < 14; j++) {
+          let x = i * sp, y = j * sp * 0.92;
+          const xr = x * Math.cos(tilt) - y * Math.sin(tilt) + W * 0.76;
+          const yr = x * Math.sin(tilt) + y * Math.cos(tilt) + H * 0.08;
+          if (xr < W * 0.48 || xr > W + 20 || yr < -20 || yr > H + 20) continue;
+          drawAtom(ctx, xr, yr, 8, '#3ddc97');
+        }
+        // 晶界带
+        const g = ctx.createLinearGradient(W * 0.46, 0, W * 0.54, 0);
+        g.addColorStop(0, 'rgba(255,176,46,0)');
+        g.addColorStop(0.5, 'rgba(255,176,46,.35)');
+        g.addColorStop(1, 'rgba(255,176,46,0)');
+        ctx.fillStyle = g;
+        ctx.fillRect(W * 0.44, 0, W * 0.12, H);
+        ctx.fillStyle = '#ffb02e'; ctx.font = '12px PingFang SC';
+        ctx.fillText('晶界', W * 0.5 - 14, H - 14);
+        ctx.fillStyle = '#9db8dd'; ctx.font = '12px PingFang SC';
+        ctx.fillText('晶粒 A（位向 1）', 20, 24);
+        ctx.fillText('晶粒 B（位向 2）', W - 130, 24);
+      }
+
+      function draw() {
+        const { ctx, W, H } = fitCanvas(cv);
+        ctx.clearRect(0, 0, W, H);
+        if (cur === 'point') drawPoint(ctx, W, H);
+        else if (cur === 'line') drawLine(ctx, W, H);
+        else drawPlane(ctx, W, H);
+      }
+
+      function animateDislocation() {
+        if (slipT) return;
+        let steps = 0;
+        slipT = setInterval(() => {
+          disl -= 1;
+          steps++;
+          if (disl <= 0) { clearInterval(slipT); slipT = null; slipped = 1; disl = 7; draw(); setTimeout(() => { slipped = 0; draw(); }, 2600); return; }
+          draw();
+        }, 650);
+      }
+
+      cv.addEventListener('click', () => { if (cur === 'line') animateDislocation(); });
+
+      $$('#defectTabs .tab').forEach(b => b.addEventListener('click', () => {
+        $$('#defectTabs .tab').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+        cur = b.dataset.d;
+        $('#defectInfo').innerHTML = INFO[cur] + (cur === 'line'
+          ? '<div class="controls" style="margin-top:10px"><button class="btn" onclick="document.querySelector(\'#defectCv\').click()">▶ 推动位错滑移</button></div>' : '');
+        draw();
+      }));
+      $('#defectInfo').innerHTML = INFO.point;
+      window.addEventListener('resize', draw);
+      draw();
+    })();
+
+    /* ============================================================
+       §3 冷却曲线
+    ============================================================ */
+    (function coolDemo() {
+      const cv = $('#coolCv');
+      let progress = 0, raf = null, playing = false, startTs = 0;
+      // 曲线关键点 [t, T]：室温→过冷谷底→平台→继续降温
+      const PTS = [[0, 100], [22, 58], [30, 52], [36, 58], [62, 58], [100, 8]];
+      const Tm = 58, Tn = 52;
+
+      function at(p) {
+        const x = p * 100;
+        for (let i = 1; i < PTS.length; i++) {
+          if (x <= PTS[i][0]) {
+            const [x0, y0] = PTS[i - 1], [x1, y1] = PTS[i];
+            return [x, y0 + (y1 - y0) * (x - x0) / (x1 - x0)];
+          }
+        }
+        return PTS[PTS.length - 1];
+      }
+
+      function draw() {
+        const { ctx, W, H } = fitCanvas(cv);
+        ctx.clearRect(0, 0, W, H);
+        const padL = 52, padB = 42, padT = 24, padR = 18;
+        const pw = W - padL - padR, ph = H - padT - padB;
+        const X = t => padL + t / 100 * pw;
+        const Y = T => padT + ph - T / 110 * ph;
+
+        // 轴
+        ctx.strokeStyle = '#9db8dd'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(padL, padT); ctx.lineTo(padL, padT + ph); ctx.lineTo(padL + pw, padT + ph); ctx.stroke();
+        ctx.fillStyle = '#9db8dd'; ctx.font = '12px PingFang SC';
+        ctx.fillText('温度 T', padL - 10, padT - 8);
+        ctx.fillText('时间 t', padL + pw - 30, padT + ph + 30);
+
+        // Tm / Tn 参考线
+        ctx.setLineDash([5, 5]); ctx.lineWidth = 1.2;
+        ctx.strokeStyle = 'rgba(255,176,46,.6)';
+        ctx.beginPath(); ctx.moveTo(padL, Y(Tm)); ctx.lineTo(padL + pw, Y(Tm)); ctx.stroke();
+        ctx.strokeStyle = 'rgba(92,200,255,.6)';
+        ctx.beginPath(); ctx.moveTo(padL, Y(Tn)); ctx.lineTo(padL + pw, Y(Tn)); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#ffb02e'; ctx.font = '11px Menlo, monospace';
+        ctx.fillText('T₀ 理论结晶温度', padL + 6, Y(Tm) - 5);
+        ctx.fillStyle = '#5cc8ff';
+        ctx.fillText('Tn 实际结晶温度', padL + 6, Y(Tn) + 14);
+        // ΔT 标注
+        if (progress > 0.34) {
+          ctx.strokeStyle = '#3ddc97'; ctx.lineWidth = 2;
+          const dx = padL + pw - 46;
+          ctx.beginPath(); ctx.moveTo(dx, Y(Tm)); ctx.lineTo(dx, Y(Tn)); ctx.stroke();
+          ctx.fillStyle = '#3ddc97'; ctx.font = '11px PingFang SC';
+          ctx.fillText('ΔT', dx + 5, (Y(Tm) + Y(Tn)) / 2 + 4);
+        }
+
+        // 已走过的曲线
+        ctx.strokeStyle = '#5cc8ff'; ctx.lineWidth = 2.6; ctx.beginPath();
+        const steps = 300;
+        for (let i = 0; i <= steps * progress; i++) {
+          const [t, T] = at(i / steps);
+          i === 0 ? ctx.moveTo(X(t), Y(T)) : ctx.lineTo(X(t), Y(T));
+        }
+        ctx.stroke();
+
+        if (progress > 0) {
+          const [t, T] = at(progress);
+          ctx.fillStyle = '#fff';
+          ctx.beginPath(); ctx.arc(X(t), Y(T), 4.5, 0, 7); ctx.fill();
+          // 阶段标注
+          ctx.font = '11.5px PingFang SC';
+          if (progress > 0.36 && progress < 0.62) {
+            ctx.fillStyle = '#3ddc97';
+            ctx.fillText('结晶平台：释放结晶潜热，温度不变', X(t) - 190, Y(Tm) - 16);
+          }
+          if (progress >= 0.62) {
+            ctx.fillStyle = '#3ddc97';
+            ctx.fillText('结晶完毕，固体继续降温', X(66), Y(40));
+            ctx.fillStyle = '#ffb02e';
+            ctx.fillText('过冷：先降到 Tn 以下再回升', X(24), Y(34));
+          }
+        }
+      }
+
+      $('#coolPlay').addEventListener('click', () => {
+        if (playing) return;
+        if (progress >= 1) { progress = 0; }
+        playing = true; startTs = 0;
+        (function tick(ts) {
+          if (!startTs) startTs = ts;
+          progress = Math.min(1, (ts - startTs) / 9000);
+          draw();
+          if (progress < 1) raf = requestAnimationFrame(tick);
+          else playing = false;
+        })(performance.now());
+      });
+      $('#coolReset').addEventListener('click', () => { cancelAnimationFrame(raf); playing = false; progress = 0; draw(); });
+      window.addEventListener('resize', draw);
+      draw();
+    })();
+
+    /* ============================================================
+       §3 结晶模拟（形核与长大）
+    ============================================================ */
+    (function nuclDemo() {
+      const cv = $('#nuclCv');
+      const HUES = [200, 160, 35, 280, 340, 90, 210, 180, 20, 300, 120, 250];
+      const RATES = { 1: { n: 10, label: '小（慢冷）' }, 2: { n: 45, label: '中等' }, 3: { n: 130, label: '大（快冷）' } };
+      let nuclei = [], raf = null, running = false, done = false, totalN = 45, spawnRate = 0;
+
+      function reset() {
+        cancelAnimationFrame(raf);
+        nuclei = []; running = false; done = false;
+        $('#nuclCount').textContent = '0';
+        $('#nuclProg').textContent = '0%';
+        $('#nuclJudge').textContent = '等待结晶…';
+        const { ctx, W, H } = fitCanvas(cv);
+        ctx.clearRect(0, 0, W, H);
+        // 液态背景：微波纹
+        ctx.fillStyle = 'rgba(92,200,255,.06)';
+        ctx.fillRect(0, 0, W, H);
+        ctx.fillStyle = '#9db8dd'; ctx.font = '13px PingFang SC';
+        ctx.fillText('液态金属（点击「开始结晶」）', 16, 26);
+      }
+
+      function step() {
+        const { ctx, W, H } = fitCanvas(cv);
+        // 生成晶核
+        const target = RATES[$('#nuclRate').value].n;
+        if (nuclei.length < target && Math.random() < 0.35) {
+          nuclei.push({
+            x: 10 + Math.random() * (W - 20), y: 10 + Math.random() * (H - 20),
+            r: 1.5, hue: HUES[nuclei.length % HUES.length], growing: true
+          });
+          $('#nuclCount').textContent = nuclei.length;
+        }
+        // 长大 + 相遇停止（近似：两圆相接则都停）
+        nuclei.forEach(a => {
+          if (!a.growing) return;
+          let maxR = 1e9;
+          nuclei.forEach(b => {
+            if (a === b) return;
+            const d = Math.hypot(a.x - b.x, a.y - b.y);
+            maxR = Math.min(maxR, d - b.r);
+          });
+          if (maxR <= a.r + 0.4) { a.growing = false; return; }
+          a.r = Math.min(a.r + 0.9, maxR);
+        });
+        // 画
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = 'rgba(92,200,255,.06)'; ctx.fillRect(0, 0, W, H);
+        nuclei.forEach(a => {
+          ctx.fillStyle = `hsla(${a.hue},55%,45%,.85)`;
+          ctx.strokeStyle = 'rgba(220,235,255,.8)'; ctx.lineWidth = 1.4;
+          ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, 7); ctx.fill(); ctx.stroke();
+        });
+        // 进度：已停止/全部
+        const stopped = nuclei.filter(a => !a.growing).length;
+        const prog = nuclei.length === 0 ? 0 : Math.round(stopped / nuclei.length * 100);
+        $('#nuclProg').textContent = prog + '%';
+        const allDone = nuclei.length >= target && stopped >= nuclei.length * 0.96;
+        if (allDone) {
+          done = true; running = false;
+          const area = W * H / nuclei.length;
+          const dAvg = Math.sqrt(area / Math.PI) * 2;
+          $('#nuclProg').textContent = '100%';
+          $('#nuclJudge').innerHTML = '结晶完成：' + nuclei.length + ' 颗晶粒，平均直径 ≈ <b class="c-amber">' + dAvg.toFixed(0) + ' px</b> —— '
+            + (nuclei.length > 80 ? '<b class="c-green">细晶粒（快冷/大过冷度）</b>' : nuclei.length < 20 ? '<b class="c-red">粗晶粒（慢冷/小过冷度）</b>' : '<b class="c-amber">中等晶粒</b>');
+          return;
+        }
+        raf = requestAnimationFrame(step);
+      }
+
+      $('#nuclPlay').addEventListener('click', () => {
+        if (running) return;
+        if (done || nuclei.length === 0) reset();
+        running = true;
+        $('#nuclJudge').textContent = '结晶中：形核 → 长大 → 相遇成晶界…';
+        raf = requestAnimationFrame(step);
+      });
+      $('#nuclReset').addEventListener('click', reset);
+      $('#nuclRate').addEventListener('input', () => {
+        $('#nuclRateOut').textContent = RATES[$('#nuclRate').value].label;
+        reset();
+      });
+      window.addEventListener('resize', reset);
+      reset();
+    })();
+
+    /* ============================================================
+       §4 铸锭组织
+    ============================================================ */
+    (function ingotDemo() {
+      const cv = $('#ingotCv');
+      const INFO = {
+        chill: '<h4 style="color:var(--cyan);font-size:16px;margin-bottom:8px">① 表面细晶粒层（激冷层）</h4>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px">钢水一接触低温锭模壁，被"激冷"——过冷度极大，瞬间形成大量晶核，长成一层<b style="color:var(--ink)">细小的等轴晶</b>。</p>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">组织致密、性能好，但厚度通常只有几毫米，对铸锭整体性能影响有限。</p>',
+        columnar: '<h4 style="color:var(--amber);font-size:16px;margin-bottom:8px">② 柱状晶粒层</h4>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px">细晶层形成后，模壁被加热，过冷度减小，形核困难。此时<b style="color:var(--ink)">垂直于模壁方向散热最快</b>，已有晶粒沿散热的反方向（朝心部）择优生长，形成粗长的<b style="color:var(--ink)">柱状晶</b>。</p>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">组织较致密，但两排柱状晶相遇的交界面（特别是锭的对角线处）易聚集低熔点杂质，结合力弱，<b style="color:var(--ink)">热加工时易开裂</b>。</p>',
+        equiaxed: '<h4 style="color:var(--green);font-size:16px;margin-bottom:8px">③ 中心等轴晶粒层</h4>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px">心部温度趋于均匀，散热失去方向性；加上枝晶碎片、杂质充当晶核，剩余钢水在较大范围内<b style="color:var(--ink)">同时形核、自由长大</b>，形成粗大的等轴晶。</p>'
+          + '<p style="color:var(--ink-dim);font-size:13.5px;margin-top:8px">此处最后凝固，常形成<b style="color:var(--ink)">缩孔、疏松、气泡和杂质偏析</b>，是铸锭中质量最差的部分，需经锻轧改善。</p>'
+      };
+
+      let hover = null, grains = null, W = 0, H = 0;
+      const CHILL = 16, COL = 78;
+
+      function buildGrains(w, h) {
+        W = w; H = h;
+        const m = 34; // 模壁厚
+        const x0 = m, y0 = m, x1 = w - m, y1 = h - m;
+        grains = { m, x0, y0, x1, y1, chillDots: [], colLines: [], eqBlobs: [], shrink: [] };
+        // 细晶粒层小点
+        for (let i = 0; i < 900; i++) {
+          const x = x0 + Math.random() * (x1 - x0), y = y0 + Math.random() * (y1 - y0);
+          const d = Math.min(x - x0, x1 - x, y - y0, y1 - y);
+          if (d < CHILL) grains.chillDots.push([x, y]);
+        }
+        // 柱状晶：从内壁指向心部的细长条
+        const stepC = 13;
+        for (let x = x0 + CHILL; x <= x1 - CHILL; x += stepC) {
+          const jitter = () => (Math.random() - 0.5) * 8;
+          const lenT = COL * (0.7 + Math.random() * 0.5);
+          grains.colLines.push([[x, y0 + CHILL], [x + jitter(), y0 + CHILL + lenT]]);
+          grains.colLines.push([[x, y1 - CHILL], [x + jitter(), y1 - CHILL - lenT]]);
+        }
+        for (let y = y0 + CHILL; y <= y1 - CHILL; y += stepC) {
+          const jitter = () => (Math.random() - 0.5) * 8;
+          const lenT = COL * (0.7 + Math.random() * 0.5);
+          grains.colLines.push([[x0 + CHILL, y], [x0 + CHILL + lenT, y + jitter()]]);
+          grains.colLines.push([[x1 - CHILL, y], [x1 - CHILL - lenT, y + jitter()]]);
+        }
+        // 中心等轴晶：随机多边形
+        const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        const inr = Math.min(x1 - x0, y1 - y0) / 2 - CHILL - COL;
+        for (let i = 0; i < 46; i++) {
+          const a = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random()) * (inr - 26);
+          const bx = cx + Math.cos(a) * rr * 1.25, by = cy + Math.sin(a) * rr * 1.35;
+          const r = 10 + Math.random() * 14;
+          const pts = [];
+          const nP = 6 + (Math.random() * 3 | 0), base = Math.random() * Math.PI;
+          for (let k = 0; k < nP; k++) {
+            const aa = base + k / nP * Math.PI * 2;
+            const r2 = r * (0.7 + Math.random() * 0.5);
+            pts.push([bx + Math.cos(aa) * r2, by + Math.sin(aa) * r2]);
+          }
+          grains.eqBlobs.push(pts);
+        }
+        // 缩孔
+        for (let i = 0; i < 7; i++) {
+          grains.shrink.push([cx + (Math.random() - .5) * inr, cy - inr * .5 + (Math.random() - .5) * inr * .7, 4 + Math.random() * 7]);
+        }
+      }
+
+      function zoneAt(x, y) {
+        if (!grains) return null;
+        const { x0, y0, x1, y1 } = grains;
+        if (x < x0 || x > x1 || y < y0 || y > y1) return null;
+        const d = Math.min(x - x0, x1 - x, y - y0, y1 - y);
+        if (d < CHILL) return 'chill';
+        if (d < CHILL + COL) return 'columnar';
+        return 'equiaxed';
+      }
+
+      function draw() {
+        const { ctx, W: w, H: h } = fitCanvas(cv);
+        if (!grains || Math.abs(w - W) > 2) buildGrains(w, h);
+        ctx.clearRect(0, 0, w, h);
+        const g = grains;
+
+        // 模壁
+        ctx.fillStyle = '#1a3a63';
+        ctx.fillRect(0, 0, w, h);
+        ctx.fillStyle = '#0a1f3d';
+        ctx.fillRect(g.x0, g.y0, g.x1 - g.x0, g.y1 - g.y0);
+        ctx.fillStyle = '#9db8dd'; ctx.font = '12px PingFang SC';
+        ctx.fillText('锭模', 8, 20);
+
+        // 高亮区遮罩
+        function hlZone(z) {
+          ctx.save();
+          ctx.strokeStyle = z === 'chill' ? '#5cc8ff' : z === 'columnar' ? '#ffb02e' : '#3ddc97';
+          ctx.lineWidth = 2.5; ctx.setLineDash([6, 4]);
+          const pad = z === 'chill' ? 2 : z === 'columnar' ? CHILL + 2 : CHILL + COL + 2;
+          const x0 = g.x0 + pad, y0 = g.y0 + pad, x1 = g.x1 - pad, y1 = g.y1 - pad;
+          if (z === 'equiaxed') ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+          else {
+            ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+            const pad2 = pad + (z === 'chill' ? CHILL : COL);
+            ctx.strokeRect(g.x0 + pad2, g.y0 + pad2, (g.x1 - g.x0) - pad2 * 2, (g.y1 - g.y0) - pad2 * 2);
+          }
+          ctx.restore();
+        }
+
+        // 细晶粒层
+        ctx.fillStyle = 'rgba(92,200,255,.9)';
+        g.chillDots.forEach(([x, y]) => { ctx.fillRect(x, y, 2, 2); });
+        // 柱状晶
+        ctx.strokeStyle = 'rgba(255,176,46,.75)'; ctx.lineWidth = 3;
+        g.colLines.forEach(([[ax, ay], [bx, by]]) => {
+          ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke();
+        });
+        // 中心等轴晶
+        g.eqBlobs.forEach(pts => {
+          ctx.fillStyle = 'rgba(61,220,151,.28)';
+          ctx.strokeStyle = 'rgba(61,220,151,.8)'; ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          pts.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+          ctx.closePath(); ctx.fill(); ctx.stroke();
+        });
+        // 缩孔
+        ctx.fillStyle = '#060f1e';
+        ctx.strokeStyle = 'rgba(255,107,107,.7)'; ctx.lineWidth = 1.4;
+        g.shrink.forEach(([x, y, r]) => { ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); });
+
+        if (hover) hlZone(hover);
+
+        // 图注
+        ctx.fillStyle = '#5cc8ff'; ctx.font = '11px PingFang SC';
+        ctx.fillText('细晶粒层', g.x0 + 4, g.y0 + 13);
+        ctx.fillStyle = '#ffb02e';
+        ctx.fillText('柱状晶粒层', g.x0 + CHILL + 6, g.y0 + CHILL + 16);
+        ctx.fillStyle = '#3ddc97';
+        ctx.fillText('中心等轴晶粒层（含缩孔疏松）', w / 2 - 88, h / 2 + 4);
+      }
+
+      function pick(e) {
+        const r = cv.getBoundingClientRect();
+        const x = (e.clientX - r.left), y = (e.clientY - r.top) * (parseFloat(cv.style.height) ? cv.getBoundingClientRect().height / r.height : 1);
+        return zoneAt(x, y);
+      }
+
+      cv.addEventListener('mousemove', e => { const z = pick(e); if (z !== hover) { hover = z; draw(); } });
+      cv.addEventListener('mouseleave', () => { hover = null; draw(); });
+      cv.addEventListener('click', e => {
+        const z = pick(e);
+        if (z) $('#ingotInfo').innerHTML = INFO[z];
+      });
+      window.addEventListener('resize', () => { grains = null; draw(); });
+      draw();
+    })();
+
+    /* ============================================================
+       自测题
+    ============================================================ */
+    (function quiz() {
+      const QS = [
+        {
+          q: '下列关于晶体的说法，正确的是……',
+          opts: ['原子排列长程无序', '没有固定熔点', '原子规则排列、有固定熔点', '性能各向同性且无规律'],
+          ans: 2,
+          exp: '晶体的本质是原子长程有序的规则排列，因此有固定熔点；单晶体呈各向异性。非晶体才无固定熔点。'
+        },
+        {
+          q: '用来描述晶体中原子排列规律的空间格架称为……',
+          opts: ['晶胞', '晶格', '晶界', '晶粒'],
+          ans: 1,
+          exp: '晶格是抽象出的空间格架；晶格中最小的代表性几何单元才叫晶胞。'
+        },
+        {
+          q: '体心立方晶胞（BCC）中的原子数是……',
+          opts: ['1 个', '2 个', '4 个', '6 个'],
+          ans: 1,
+          exp: '8 个顶角原子各被 8 个晶胞共享（8×1/8=1），体心原子独占 1 个，共 2 个。FCC 是 4 个，HCP 是 6 个。'
+        },
+        {
+          q: '下列金属中，属于面心立方晶格（FCC）的是……',
+          opts: ['α-Fe', 'Mg', 'Cu', 'Zn'],
+          ans: 2,
+          exp: 'Cu、Al、Ni、γ-Fe 属于 FCC，塑性好；α-Fe 是 BCC；Mg、Zn 是 HCP。'
+        },
+        {
+          q: '单晶体呈各向异性，而实际多晶体金属宏观上表现为各向同性，原因是……',
+          opts: ['多晶体中晶粒位向随机，各方向性能互相抵消', '多晶体没有晶界', '多晶体中原子不再规则排列', '多晶体是非晶体'],
+          ans: 0,
+          exp: '无数位向随机的晶粒使各向异性在宏观上平均化，称为"伪各向同性"。'
+        },
+        {
+          q: '金属的实际强度远低于理论强度，主要原因是晶体中存在……',
+          opts: ['空位', '位错', '杂质', '气泡'],
+          ans: 1,
+          exp: '位错使晶体可以通过位错逐排滑移而非整体滑移来变形，大大降低了所需切应力，因此实际强度远低于理论值。'
+        },
+        {
+          q: '晶界对金属常温力学性能的影响是……',
+          opts: ['削弱强度，晶粒越细越软', '阻碍位错运动，晶粒越细强度越高', '没有任何影响', '只影响导电性'],
+          ans: 1,
+          exp: '晶界处原子排列紊乱，阻碍位错滑移。晶粒越细、晶界越多，强化效果越明显——细晶强化。'
+        },
+        {
+          q: '纯金属结晶时出现"平台"的原因是……',
+          opts: ['温度计坏了', '结晶时释放结晶潜热，补偿散热', '停止了散热', '金属变成了非晶体'],
+          ans: 1,
+          exp: '结晶潜热的释放与向外散热达到平衡，温度保持恒定，冷却曲线上出现水平平台。'
+        },
+        {
+          q: '过冷度 ΔT 指的是……',
+          opts: ['理论结晶温度与实际结晶温度之差', '室温与熔点之差', '加热温度与冷却温度之差', '浇注温度与环境温度之差'],
+          ans: 0,
+          exp: 'ΔT = T₀ − Tn。实际结晶总是发生在理论熔点以下，冷却速度越大，过冷度越大。'
+        },
+        {
+          q: '要获得细小的晶粒组织，下列措施错误的是……',
+          opts: ['提高冷却速度以增大过冷度', '浇注前进行变质处理', '结晶时附加振动或搅拌', '尽可能缓慢冷却，让晶粒充分长大'],
+          ans: 3,
+          exp: '缓慢冷却使形核少、长大充分，得到的是粗大晶粒。细晶的正确途径：大过冷度、变质处理、附加振动。'
+        },
+        {
+          q: '铸锭中紧靠模壁的"表面细晶粒层"形成的原因是……',
+          opts: ['模壁温度低，过冷度极大，形核率高', '该处含杂质最多', '该处最后凝固', '模壁的机械挤压'],
+          ans: 0,
+          exp: '低温模壁对钢水强烈激冷，极大过冷度下瞬间形成大量晶核，长成细密等轴晶。'
+        },
+        {
+          q: '关于铸锭的柱状晶粒层，下列说法正确的是……',
+          opts: ['晶粒沿平行模壁方向生长', '由均匀形核自由长大形成', '晶粒沿垂直模壁的散热方向择优生长，交界杂质处热加工易开裂', '是铸锭中质量最好的区域'],
+          ans: 2,
+          exp: '柱状晶垂直模壁朝心部定向生长；两排柱状晶交界面（对角线）杂质富集、结合弱，锻造时易开裂。'
+        },
+        {
+          q: '面心立方晶格（FCC）的配位数是……',
+          opts: ['4', '8', '12', '6'],
+          ans: 2,
+          exp: '配位数是晶体中与任一原子最近邻、等距离的原子数。FCC 每个原子有 12 个最近邻，BCC 为 8。配位数越大，原子排列越紧密。'
+        },
+        {
+          q: '三种典型晶格中，原子排列最紧密（致密度约 74%）的是……',
+          opts: ['体心立方 BCC', '面心立方 FCC 与密排六方 HCP', '简单立方', '三种都一样'],
+          ans: 1,
+          exp: 'FCC 和 HCP 致密度均为 74%，是原子最紧密的堆垛方式；BCC 致密度约 68%，相对"疏松"。'
+        },
+        {
+          q: '晶格中最小的、能完全代表原子排列规律的几何单元称为……',
+          opts: ['晶粒', '晶胞', '晶面', '晶界'],
+          ans: 1,
+          exp: '晶胞是晶格的"最小砖块"，无数晶胞周期性重复堆垛就构成整个晶体——在 3D 演示里可以旋转看清它的结构。'
+        },
+        {
+          q: '纯铁在 912℃ 时由 α-Fe（体心立方）转变为 γ-Fe（面心立方），这种现象称为……',
+          opts: ['同素异构转变', '结晶', '偏析', '加工硬化'],
+          ans: 0,
+          exp: '同一种元素在固态下随温度改变晶格类型，叫同素异构转变。铁的这一特性正是钢铁能够淬火强化的物理基础。'
+        },
+        {
+          q: '下列金属中，属于密排六方晶格（HCP）、塑性偏差的是……',
+          opts: ['Cu', 'Al', 'Mg', 'γ-Fe'],
+          ans: 2,
+          exp: 'Mg、Zn、Ti 属 HCP，滑移系少，常温塑性较差；Cu、Al、γ-Fe 是 FCC，塑性好，适合冲压拉深。'
+        },
+        {
+          q: '晶体中"跑掉一个原子留下的空位置"和"挤进晶格间隙的多余原子"属于……',
+          opts: ['线缺陷', '面缺陷', '点缺陷', '体缺陷'],
+          ans: 2,
+          exp: '空位和间隙原子都是在一个原子尺度上的点缺陷。点缺陷会引起周围晶格畸变，影响扩散和强度。'
+        },
+        {
+          q: '溶质原子溶入铁晶格间隙后使强度提高，这种强化方式称为……',
+          opts: ['细晶强化', '固溶强化', '加工硬化', '时效强化'],
+          ans: 1,
+          exp: '间隙原子造成晶格畸变，阻碍位错运动，从而提高强度。钢中碳原子间隙固溶于铁素体就是典型例子。'
+        },
+        {
+          q: '位错属于哪一类晶体缺陷？',
+          opts: ['点缺陷', '线缺陷', '面缺陷', '体缺陷'],
+          ans: 1,
+          exp: '位错是原子面局部滑移形成的线状缺陷；晶界、亚晶界则是面缺陷。金属塑性变形的本质就是位错的滑移运动。'
+        },
+        {
+          q: '冷轧钢板越轧越硬、越难变形，其微观原因是……',
+          opts: ['晶粒变成了非晶体', '位错大量增殖并相互缠结，滑移受阻', '空位全部消失', '晶界自动消失'],
+          ans: 1,
+          exp: '塑性变形中位错不断增殖、缠结成"位错森林"，继续滑移越来越困难，宏观上就表现为加工硬化（形变强化）。'
+        },
+        {
+          q: '关于金属强度与位错密度的关系，下列说法正确的是……',
+          opts: ['位错越多强度一定越低', '位错极少（晶须）或位错很多（冷变形）时强度高，退火态位错适中时强度最低', '位错与强度无关', '只要没有位错，金属就没有强度'],
+          ans: 1,
+          exp: '这是一条经典曲线：退火态位错密度适中、易于滑移，强度最低；位错极少时只能整体滑移、位错很多时相互缠结，两种情况强度都高。'
+        },
+        {
+          q: '晶界处相邻晶粒的位向差较小（小于 10°）时，晶界实际上是由什么组成的？',
+          opts: ['非晶体夹层', '规则排列的位错墙', '气泡', '第二相颗粒'],
+          ans: 1,
+          exp: '小角度晶界（亚晶界）可以看成由一系列位错规则排列而成的"位错墙"，大角度晶界才是原子完全紊乱的过渡带。'
+        },
+        {
+          q: '金属结晶过程的两个基本环节是……',
+          opts: ['加热与保温', '形核与长大', '熔化与凝固', '扩散与偏聚'],
+          ans: 1,
+          exp: '一切结晶都是"不断形成晶核、晶核不断长大"的过程。晶粒粗细就取决于形核率与长大速度的相对大小。'
+        },
+        {
+          q: '实际金属结晶时，绝大多数晶核依附于杂质或模壁表面形成，这种形核方式称为……',
+          opts: ['均匀形核', '非均匀形核', '自发形核', '二次形核'],
+          ans: 1,
+          exp: '依附现成表面形核所需能量低、过冷度小，称为非均匀形核；均匀（自发）形核需要很大的过冷度，实际生产中很难发生。'
+        },
+        {
+          q: '在其他条件相同时，过冷度越大，得到的晶粒组织……',
+          opts: ['越粗大', '越细小', '没有变化', '变成非晶体'],
+          ans: 1,
+          exp: '过冷度增大使形核率的增长远大于长大速度的增长，晶核"遍地开花"，最终得到细小晶粒——这正是铸造上提高冷却速度细晶的原理。'
+        },
+        {
+          q: '浇注前向铝液中加入少量钛、硼等元素以细化晶粒，这种工艺称为……',
+          opts: ['时效处理', '变质处理', '冷处理', '化学热处理'],
+          ans: 1,
+          exp: '变质处理通过加入外来质点充当人工晶核（非均匀形核），大幅提高形核率，是铸造生产中最常用的细晶手段。'
+        },
+        {
+          q: '金属结晶时晶核常长成树枝状晶体，其主要原因是……',
+          opts: ['树枝尖端散热快、生长快，棱角处优先生长', '模壁的挤压', '原子喜欢排成树形', '搅拌造成的'],
+          ans: 0,
+          exp: '枝晶尖端和棱角处散热条件好、生长速度快，于是沿特定晶向不断分枝长大，形成树枝晶。结晶动画里可以看到这个过程。'
+        },
+        {
+          q: '铸锭心部"中心等轴晶区"的形成原因是……',
+          opts: ['心部散热失去方向性，且枝晶碎片游离到心部充当晶核，各方向均匀长大', '心部最后浇注', '心部杂质最多所以晶粒大', '心部温度最高无法定向凝固'],
+          ans: 0,
+          exp: '凝固后期心部温差小、散热无方向性，加上被冲断的枝晶碎片和杂质核心游离其中，便长成无方向性的等轴晶。'
+        },
+        {
+          q: '铸锭最后凝固部位集中出现的孔洞类缺陷称为……',
+          opts: ['气孔', '缩孔与疏松', '夹杂', '冷隔'],
+          ans: 1,
+          exp: '液态金属凝固收缩，最后凝固的心部上部得不到补缩便形成集中的缩孔和分散的疏松。缩孔在轧制前必须切除，否则会遗留成内部裂纹。'
+        }
+      ];
+      const box = $('#quizBox');
+      QS.forEach((Q, qi) => {
+        const div = document.createElement('div');
+        div.className = 'quiz-q';
+        div.innerHTML = '<div class="q"><span class="num">Q' + (qi + 1) + '</span>' + Q.q + '</div>'
+          + '<div class="opts">' + Q.opts.map((o, i) =>
+            '<button class="opt" data-i="' + i + '">' + String.fromCharCode(65 + i) + '. ' + o + '</button>').join('')
+          + '</div><div class="quiz-exp">' + Q.exp + '</div>';
+        box.appendChild(div);
+        div.querySelectorAll('.opt').forEach(btn => btn.addEventListener('click', () => {
+          div.querySelectorAll('.opt').forEach(b => {
+            b.classList.remove('right', 'wrong');
+            if (+b.dataset.i === Q.ans) b.classList.add('right');
+          });
+          if (+btn.dataset.i !== Q.ans) btn.classList.add('wrong');
+          div.querySelector('.quiz-exp').classList.add('show');
+        }));
+      });
+    })();
+  </script>
+</body>
+
+</html>

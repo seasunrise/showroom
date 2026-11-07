@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工程材料及热处理 · 互动课堂</title>
+  <style>
+    :root {
+      --bg: #0b2547;
+      --panel: #123a6e;
+      --line: rgba(120, 180, 255, .16);
+      --line2: rgba(120, 180, 255, .32);
+      --ink: #dce9ff;
+      --ink-dim: #9db8dd;
+      --cyan: #5cc8ff;
+      --green: #3ddc97;
+      --amber: #ffb02e;
+      --white: #f4f9ff;
+      --mono: "SF Mono", ui-monospace, Menlo, Consolas, monospace;
+      --sans: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box }
+
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--bg);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        linear-gradient(rgba(120, 180, 255, .05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 180, 255, .05) 1px, transparent 1px),
+        linear-gradient(rgba(120, 180, 255, .028) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(120, 180, 255, .028) 1px, transparent 1px),
+        radial-gradient(1200px 600px at 70% -10%, #16407c 0%, var(--bg) 60%);
+      background-size: 120px 120px, 120px 120px, 24px 24px, 24px 24px, 100% 100%;
+    }
+
+    .wrap { max-width: 980px; margin: 0 auto; padding: 90px 20px 60px }
+
+    .kicker {
+      display: inline-block;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--cyan);
+      border: 1px solid var(--line2);
+      border-radius: 999px;
+      padding: 4px 14px;
+      margin-bottom: 14px;
+      letter-spacing: .14em;
+    }
+
+    h1 {
+      font-size: clamp(28px, 5vw, 44px);
+      color: var(--white);
+      line-height: 1.25;
+      margin-bottom: 12px;
+    }
+
+    h1 .hl {
+      background: linear-gradient(90deg, var(--cyan), var(--green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .sub { color: var(--ink-dim); max-width: 680px; margin-bottom: 40px }
+
+    .chapters { display: grid; gap: 18px }
+
+    .ch {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      background: linear-gradient(180deg, rgba(18, 58, 110, .55), rgba(13, 44, 88, .55));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 24px 26px;
+      text-decoration: none;
+      transition: .25s;
+    }
+
+    .ch:hover { border-color: var(--cyan); transform: translateY(-3px); box-shadow: 0 10px 40px rgba(92, 200, 255, .12) }
+
+    .ch .num {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--bg);
+      background: var(--cyan);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .ch h2 { color: var(--white); font-size: 19px; margin-bottom: 4px }
+    .ch p { color: var(--ink-dim); font-size: 14px }
+
+    .ch .secs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px }
+
+    .ch .secs span {
+      font-size: 11.5px;
+      font-family: var(--mono);
+      border: 1px solid var(--line2);
+      color: var(--ink-dim);
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    footer {
+      margin-top: 60px;
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      color: var(--ink-dim);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    a { color: var(--cyan) }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="kicker">互动课堂系列</div>
+    <h1>《工程材料及热处理》<br><span class="hl">可视化 · 互动式</span> 章节解说</h1>
+    <p class="sub">航空工业出版社 · 第一版（徐勇、戴乃昌、孙伟 主编）。每章一个互动页面：能拖、能点、能看动画，学完还有随堂自测。</p>
+
+    <div class="chapters">
+      <a class="ch" href="./chapter1-mechanical-properties.html">
+        <span class="num">第 1 章</span>
+        <div>
+          <h2>材料的力学性能</h2>
+          <p>拉伸试验机、硬度压头、摆锤冲击、S-N 疲劳曲线——四个互动实验讲透强度、塑性、硬度、韧性与疲劳强度。</p>
+          <div class="secs">
+            <span>§1 概述</span><span>§2 力学性能指标</span><span>15 道自测</span>
+          </div>
+        </div>
+      </a>
+
+      <a class="ch" href="./chapter2-crystal-structure.html">
+        <span class="num">第 2 章</span>
+        <div>
+          <h2>金属材料基础知识</h2>
+          <p>3D 旋转晶胞、位错运动动画、结晶过程模拟、铸锭三层组织——从原子排列看懂金属的内部世界。</p>
+          <div class="secs">
+            <span>§1 理想晶体结构</span><span>§2 实际晶体构造</span><span>§3 结晶过程</span><span>§4 铸锭组织</span><span>30 道自测</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <footer>
+      持续更新中 · 仅供学习交流 · <a href="../../index.html">返回课业展厅</a>
+    </footer>
+  </div>
+</body>
+
+</html>
