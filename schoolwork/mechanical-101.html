@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>机械入门 · Mechanical 101 — 可动手的 3D 机构课</title>
+<meta name="description" content="从零开始学机械：电机、齿轮、轴与键、曲柄滑块、凸轮、摩擦与负载。九节课，每个零件都能点、都能改，机构实时联动。">
+<meta name="theme-color" content="#f6eddd">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Semi+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6eddd; --bg-deep:#efe3d1; --sidebar:#e9dcca;
+  --card:#f9f2e5; --card-soft:rgba(250,244,233,.96);
+  --line:#cec0ad; --line-soft:#e2d7c7;
+  --navy:#18213d; --navy-2:#24304a;
+  --ink:#4f535b; --muted:#696d74; --faint:#ada293;
+  --teal:#1aa3a1; --teal-deep:#3f7f8e; --trace:#d3bea3;
+  --amber:#c0652d;
+  --sans:"Barlow",system-ui,-apple-system,"PingFang SC",sans-serif;
+  --cond:"Barlow Semi Condensed","Barlow",system-ui,-apple-system,"PingFang SC",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button{font-family:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+/* ---------- loader ---------- */
+#loader{position:fixed;inset:0;z-index:100;background:var(--bg);display:grid;place-items:center;transition:opacity .5s,visibility .5s}
+#loader.gone{opacity:0;visibility:hidden}
+.loader-inner{display:grid;justify-items:center;gap:14px;width:min(280px,70vw)}
+.loader-logo{width:56px;height:56px;color:var(--navy)}
+.loader-logo .spin{transform-origin:50% 50%;animation:spin 5s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader-title{font-family:var(--cond);font-size:20px;letter-spacing:.12em;color:var(--navy);font-weight:600}
+.loader-track{width:100%;height:3px;background:var(--track,#e3d8ca);overflow:hidden}
+.loader-fill{display:block;height:100%;width:0%;background:var(--teal);transition:width .4s}
+.loader-step{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+
+/* ---------- canvas / paper ---------- */
+#stage-canvas{position:fixed;inset:0;display:block;touch-action:none}
+#paper{position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:radial-gradient(120% 90% at 50% 10%,transparent 40%,rgba(120,95,60,.10) 100%)}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:1;
+  background:linear-gradient(90deg,rgba(233,220,202,.85) 0,rgba(233,220,202,0) 130px)}
+
+/* ---------- side rail ---------- */
+.rail{position:fixed;left:0;top:0;bottom:0;width:74px;z-index:30;background:var(--sidebar);
+  border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:18px 0 14px;gap:2px}
+.rail .rail-logo{width:30px;height:30px;color:var(--navy);margin-bottom:14px}
+.rail button{width:58px;padding:9px 0 7px;display:grid;justify-items:center;gap:4px;color:var(--muted);
+  border-radius:2px;transition:background .15s,color .15s;position:relative}
+.rail button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.rail button .fill{fill:currentColor;stroke:none}
+.rail button span{font-family:var(--cond);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase}
+.rail button:hover,.rail button.active{background:rgba(24,33,61,.07);color:var(--navy)}
+.rail button.active::before{content:"";position:absolute;left:-8px;top:8px;bottom:8px;width:2px;background:var(--teal)}
+.rail .spacer{flex:1}
+.rail .lang code{font-family:var(--mono);font-size:10px;letter-spacing:.1em}
+
+/* ---------- brand ---------- */
+.brand{position:fixed;left:100px;top:20px;z-index:20;display:flex;align-items:center;gap:14px;pointer-events:none}
+.brand-rule{width:1px;height:44px;background:var(--line)}
+.brand-text h1{font-family:var(--cond);font-weight:600;font-size:25px;letter-spacing:.02em;color:var(--navy);line-height:1.05}
+.brand-text p{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-top:3px}
+.brand-text p i{color:var(--teal);font-style:normal}
+
+/* ---------- status ---------- */
+.status{position:fixed;right:26px;top:20px;z-index:20;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.progress-card{display:flex;align-items:center;gap:10px;background:var(--card-soft);border:1px solid var(--line);
+  padding:8px 13px 8px 10px;box-shadow:0 1px 0 rgba(24,33,61,.05)}
+.progress-icon{width:22px;height:22px;fill:none;stroke:var(--teal-deep);stroke-width:1.4;stroke-linejoin:round}
+.progress-body{display:grid;gap:4px}
+.progress-label{font-family:var(--cond);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.progress-row{display:flex;align-items:center;gap:8px}
+.progress-track{width:96px;height:3px;background:#e3d8ca;display:block;overflow:hidden}
+.progress-fill{display:block;height:100%;width:0;background:var(--teal);transition:width .35s}
+.progress-count{font-family:var(--mono);font-size:10px;color:var(--navy)}
+.clock{display:grid;justify-items:end;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--faint);line-height:1.5}
+.clock b{color:var(--muted);font-weight:400}
+
+/* ---------- info card ---------- */
+.info-card{position:fixed;right:26px;top:118px;width:312px;z-index:20;background:var(--card-soft);
+  border:1px solid var(--line);box-shadow:0 1px 0 rgba(24,33,61,.06);display:flex;flex-direction:column;
+  max-height:calc(100dvh - 264px);transition:transform .3s,opacity .3s}
+.info-card.hidden{transform:translateX(340px);opacity:0;pointer-events:none}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:var(--card)}
+.tabs button{flex:1;padding:9px 2px;font-family:var(--cond);font-size:11px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--muted);border-bottom:2px solid transparent;transition:color .15s,border-color .15s}
+.tabs button:hover{color:var(--navy)}
+.tabs button.is-active{color:var(--navy);border-bottom-color:var(--teal)}
+.info-body{padding:15px 16px 17px;overflow-y:auto;scrollbar-width:thin}
+.info-body::-webkit-scrollbar{width:5px}
+.info-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+.info-content h2{font-family:var(--cond);font-size:16px;font-weight:600;letter-spacing:.01em;color:var(--navy);
+  line-height:1.3;margin-bottom:3px}
+.info-content .eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--teal-deep);margin-bottom:8px}
+.info-content p{font-size:12.5px;line-height:1.72;color:var(--ink);margin-bottom:9px}
+.info-content p:last-child{margin-bottom:0}
+.info-content b{color:var(--navy);font-weight:600}
+.info-content .callout{border-left:2px solid var(--teal);background:rgba(26,163,161,.07);padding:8px 10px;
+  font-size:11.5px;line-height:1.6;color:var(--teal-deep);margin-top:10px}
+.info-content .formula{font-family:var(--mono);font-size:11.5px;background:var(--code-bg,#f8f0e3);
+  border:1px solid var(--line-soft);padding:9px 11px;margin:8px 0;color:var(--navy);line-height:1.8}
+.dl{display:grid;gap:7px;margin-top:2px}
+.dl div{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding-bottom:6px;border-bottom:1px dotted var(--line-soft)}
+.dl dt{color:var(--muted)}
+.dl dd{font-family:var(--mono);font-size:11.5px;color:var(--navy)}
+.parts-list{list-style:none;display:grid;gap:2px}
+.parts-list li{display:flex;align-items:center;gap:8px;padding:7px 6px;font-size:12px;border-bottom:1px solid var(--line-soft);cursor:pointer}
+.parts-list li:hover{background:rgba(24,33,61,.04)}
+.parts-list li .dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex:none}
+.parts-list li small{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--faint)}
+
+/* ---------- callout tags ---------- */
+#leaders{position:fixed;inset:0;pointer-events:none;z-index:12;overflow:visible}
+#leaders path{fill:none;stroke:var(--navy-2);stroke-width:1;opacity:.55}
+#leaders circle{fill:var(--card);stroke:var(--navy-2);stroke-width:1.2}
+.tags{position:fixed;inset:0;pointer-events:none;z-index:13}
+.tag{position:absolute;transform:translate(-50%,-50%);display:grid;gap:1px;
+  background:var(--card);border:1px solid var(--line);padding:5px 9px 6px;white-space:nowrap;
+  box-shadow:0 1px 3px rgba(24,33,61,.08);transition:opacity .25s}
+.tag .tk{font-family:var(--cond);font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--navy);line-height:1.15}
+.tag .tv{font-family:var(--mono);font-size:9.5px;color:var(--teal-deep);letter-spacing:.02em}
+.tag.hot{border-color:var(--amber)}
+.tag.hot .tv{color:var(--amber)}
+
+/* ---------- chart ---------- */
+.chart-card{position:fixed;left:100px;bottom:178px;width:262px;z-index:19;background:var(--card-soft);
+  border:1px solid var(--line);box-shadow:0 1px 0 rgba(24,33,61,.06);display:flex;flex-direction:column}
+.chart-card.hidden{display:none}
+.chart-head{display:flex;align-items:center;gap:8px;padding:8px 11px;border-bottom:1px solid var(--line-soft)}
+.chart-title{font-family:var(--cond);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chart-value{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--navy)}
+.chart-fold{width:18px;height:18px;display:grid;place-items:center;color:var(--muted)}
+.chart-fold svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:1.6;transition:transform .2s}
+.chart-card.folded .chart-fold svg{transform:rotate(180deg)}
+.chart-card.folded .chart-body{display:none}
+.chart-body{padding:6px 4px 2px}
+#chartSvg{display:block;width:100%;height:86px}
+
+/* ---------- lesson strip ---------- */
+.lessons{position:fixed;left:100px;right:362px;bottom:18px;z-index:20;background:var(--card-soft);
+  border:1px solid var(--line);box-shadow:0 1px 0 rgba(24,33,61,.06);display:flex;flex-direction:column}
+.lesson-head{display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--line-soft)}
+.pick{display:flex;align-items:center;gap:7px;font-family:var(--cond);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);padding:2px 0}
+.pick b{color:var(--navy);font-weight:600}
+.pick .grp{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--teal-deep);
+  background:rgba(26,163,161,.1);padding:2px 6px}
+.lesson-head .spacer{flex:1}
+.lesson-count{font-family:var(--mono);font-size:10px;color:var(--faint)}
+.lesson-row{display:flex;align-items:stretch}
+.lesson-scroll{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;flex:1;scroll-behavior:smooth;
+  mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 10px),transparent 100%);
+  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 16px,#000 calc(100% - 10px),transparent 100%)}
+.lesson-scroll::-webkit-scrollbar{height:4px}
+.lesson-scroll::-webkit-scrollbar-thumb{background:var(--line)}
+.lesson-list{list-style:none;display:flex;min-width:max-content;padding:0}
+.lesson-list li{width:154px;padding:9px 12px 11px;border-right:1px solid var(--line-soft);cursor:pointer;
+  display:grid;gap:4px;position:relative;transition:background .15s}
+.lesson-list li:hover{background:rgba(24,33,61,.035)}
+.lesson-list li.is-active{background:var(--card)}
+.lesson-list li.is-active::before{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:var(--teal)}
+.lesson-list li .no{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--faint);display:flex;gap:5px;align-items:center}
+.lesson-list li.done .no{color:var(--teal)}
+.lesson-list li .no .ck{opacity:0;color:var(--teal)}
+.lesson-list li.done .no .ck{opacity:1}
+.lesson-list li .tt{font-family:var(--cond);font-size:12.5px;line-height:1.3;color:var(--navy);font-weight:500}
+.lesson-list li .st{font-family:var(--mono);font-size:9px;color:var(--faint);letter-spacing:.04em}
+.lesson-list li.is-active .st{color:var(--teal-deep)}
+.lesson-nav{display:flex;border-left:1px solid var(--line-soft)}
+.lesson-nav button{width:40px;display:grid;place-items:center;color:var(--navy);transition:background .15s}
+.lesson-nav button:hover{background:rgba(24,33,61,.06)}
+.lesson-nav button:disabled{color:var(--line);cursor:default}
+.lesson-nav svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- viewbar ---------- */
+.viewbar{position:fixed;left:50%;transform:translateX(-50%);bottom:140px;z-index:20;
+  display:flex;align-items:center;gap:2px;background:var(--card-soft);border:1px solid var(--line);
+  padding:4px 6px;box-shadow:0 1px 0 rgba(24,33,61,.06)}
+.view-hint{font-family:var(--cond);font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--faint);padding:0 10px 0 4px;white-space:nowrap}
+.viewbar button{width:28px;height:28px;display:grid;place-items:center;color:var(--navy-2);border-radius:2px}
+.viewbar button:hover{background:rgba(24,33,61,.06)}
+.viewbar button[aria-pressed="true"]{background:rgba(26,163,161,.14);color:var(--teal-deep)}
+.viewbar svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.viewbar .fill{fill:currentColor;stroke:none}
+.viewbar-sep{width:1px;height:16px;background:var(--line-soft);margin:0 3px}
+
+/* ---------- tooltip ---------- */
+#tip{position:fixed;z-index:40;pointer-events:none;background:var(--navy);color:#f6eddd;
+  padding:4px 8px 5px;font-size:11px;opacity:0;transition:opacity .12s;white-space:nowrap}
+#tip b{font-family:var(--cond);letter-spacing:.05em;font-weight:600;font-size:11.5px}
+#tip span{color:#bfc9d8;font-family:var(--mono);font-size:9.5px;margin-left:6px}
+#toast{position:fixed;left:50%;bottom:214px;transform:translate(-50%,6px);z-index:45;
+  background:var(--navy);color:#f6eddd;font-size:11.5px;padding:7px 14px;opacity:0;transition:all .22s;pointer-events:none}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+/* ---------- modal / flyout ---------- */
+#modal{position:fixed;inset:0;z-index:60;display:none;background:rgba(24,33,61,.28)}
+#modal.show{display:block}
+#modal .box{position:absolute;left:88px;top:84px;width:min(420px,calc(100vw - 120px));max-height:calc(100dvh - 140px);
+  overflow-y:auto;background:var(--card);border:1px solid var(--line);box-shadow:0 18px 44px rgba(24,33,61,.16);padding:20px 22px}
+#modal .box h2{font-family:var(--cond);font-size:19px;color:var(--navy);letter-spacing:.01em}
+#modal .msub{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:5px 0 16px}
+#modal .close{position:absolute;right:12px;top:10px;width:26px;height:26px;display:grid;place-items:center;color:var(--muted)}
+#modal .close:hover{color:var(--navy)}
+#modal .close svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round}
+.ci{border:1px solid var(--line-soft);padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:border-color .15s,background .15s}
+.ci:hover{border-color:var(--teal);background:rgba(26,163,161,.05)}
+.ci h3{font-family:var(--cond);font-size:13.5px;color:var(--navy);font-weight:600;margin-bottom:3px}
+.ci p{font-size:11.5px;line-height:1.6;color:var(--muted)}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:11px 0;
+  border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.sw{width:38px;height:20px;border:1px solid var(--line);background:#e7dccb;position:relative;flex:none;transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;background:var(--faint);transition:all .2s}
+.sw.on{background:rgba(26,163,161,.22);border-color:var(--teal)}
+.sw.on::after{left:20px;background:var(--teal-deep)}
+.lede{font-size:13px;line-height:1.8;color:var(--ink);margin-bottom:14px}
+.btn{background:var(--navy);color:#f6eddd;font-family:var(--cond);font-size:12px;letter-spacing:.08em;
+  text-transform:uppercase;padding:9px 18px;transition:background .15s}
+.btn:hover{background:var(--navy-2)}
+
+/* ---------- responsive ---------- */
+@media (max-width:1180px){
+  .lessons{right:26px}
+}
+@media (max-width:900px){
+  .info-card{display:none}
+  .lessons{right:14px}
+  .chart-card{display:none}
+}
+@media (max-width:820px){
+  .rail{width:56px}
+  .rail button{width:46px}
+  .rail button span{display:none}
+  .brand{left:74px;top:14px}
+  .brand-text h1{font-size:20px}
+  .status{right:14px;top:14px}
+  .progress-card{display:none}
+  .chart-card{display:none}
+  .lessons{left:74px;right:14px;bottom:12px}
+  .viewbar{display:none}
+  .lesson-list li{width:138px}
+}
+</style>
+</head>
+<body>
+<div id="loader">
+  <div class="loader-inner">
+    <svg class="loader-logo" viewBox="0 0 48 48" aria-hidden="true">
+      <g class="spin">
+        <circle cx="24" cy="24" r="13" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <circle cx="24" cy="24" r="4.4" fill="none" stroke="currentColor" stroke-width="1.6"/>
+        <g stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+          <path d="M24 5v5M24 38v5M5 24h5M38 24h5M10.6 10.6l3.5 3.5M33.9 33.9l3.5 3.5M37.4 10.6l-3.5 3.5M14.1 33.9l-3.5 3.5"/>
+        </g>
+      </g>
+    </svg>
+    <p class="loader-title">Mechanical 101</p>
+    <div class="loader-track"><span class="loader-fill" id="loaderFill"></span></div>
+    <p class="loader-step" id="loaderStep">Loading</p>
+  </div>
+</div>
+
+<canvas id="stage-canvas" aria-label="可交互 3D 机械台架：拖拽或 WASD 平移，Q/E 旋转，滚轮缩放"></canvas>
+<div id="paper"></div>
+<div id="vignette"></div>
+
+<nav class="rail" aria-label="主导航">
+  <svg class="rail-logo" viewBox="0 0 48 48" aria-hidden="true">
+    <circle cx="24" cy="24" r="12.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <circle cx="24" cy="24" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/>
+    <g stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+      <path d="M24 6v4.6M24 37.4V42M6 24h4.6M37.4 24H42M11.3 11.3l3.2 3.2M33.5 33.5l3.2 3.2M36.7 11.3l-3.2 3.2M14.5 33.5l-3.2 3.2"/>
+    </g>
+  </svg>
+  <button data-view="home" class="active" aria-label="首页">
+    <svg viewBox="0 0 24 24"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg>
+    <span>首页</span>
+  </button>
+  <button data-view="lessons" aria-label="课程">
+    <svg viewBox="0 0 24 24"><path d="M12 6.5C9.8 5 6.9 4.4 4 4.6v13.2c2.9-.2 5.8.4 8 1.9 2.2-1.5 5.1-2.1 8-1.9V4.6c-2.9-.2-5.8.4-8 1.9zM12 6.5v13.2"/></svg>
+    <span>课程</span>
+  </button>
+  <button data-view="parts" aria-label="零件库">
+    <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12"/><rect x="9.5" y="9.5" width="5" height="5" class="fill"/><path d="M9 3v3M12 3v3M15 3v3M9 18v3M12 18v3M15 18v3M3 9h3M3 12h3M3 15h3M18 9h3M18 12h3M18 15h3"/></svg>
+    <span>零件</span>
+  </button>
+  <button data-view="settings" aria-label="设置">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 3.2v2.4M12 18.4v2.4M20.8 12h-2.4M5.6 12H3.2M18.2 5.8l-1.7 1.7M7.5 16.5l-1.7 1.7M18.2 18.2l-1.7-1.7M7.5 7.5 5.8 5.8"/></svg>
+    <span>设置</span>
+  </button>
+  <div class="spacer"></div>
+  <button id="langBtn" class="lang" aria-label="切换语言">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><path d="M3.6 12h16.8M12 3.5c-2.4 2.3-3.6 5.3-3.6 8.5s1.2 6.2 3.6 8.5c2.4-2.3 3.6-5.3 3.6-8.5S14.4 5.8 12 3.5z"/></svg>
+    <span id="langTxt">EN</span>
+  </button>
+</nav>
+
+<header class="brand">
+  <div class="brand-text">
+    <h1>Mechanical 101</h1>
+    <p>观察 <i>·</i> 拆解 <i>·</i> 组装</p>
+  </div>
+  <span class="brand-rule"></span>
+  <div class="brand-text">
+    <h1 style="font-size:14px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;color:var(--muted)">机械入门</h1>
+    <p style="letter-spacing:.06em">可动手的 3D 机构课</p>
+  </div>
+</header>
+
+<section class="status" aria-label="进度">
+  <div class="progress-card">
+    <svg class="progress-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6.5C9.8 5 6.9 4.4 4 4.6v13.2c2.9-.2 5.8.4 8 1.9 2.2-1.5 5.1-2.1 8-1.9V4.6c-2.9-.2-5.8.4-8 1.9zM12 6.5v13.2"/></svg>
+    <div class="progress-body">
+      <span class="progress-label" id="progressLabel">基础机构</span>
+      <div class="progress-row">
+        <span class="progress-track"><span class="progress-fill" id="progressFill"></span></span>
+        <span class="progress-count" id="progressCount">0/9</span>
+      </div>
+    </div>
+  </div>
+  <time class="clock"><b id="clockDate">—</b><span id="clockTime">—</span></time>
+</section>
+
+<aside class="info-card" id="infoCard">
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="overview" class="is-active" aria-selected="true">概述</button>
+    <button role="tab" data-tab="parts" aria-selected="false">零件</button>
+    <button role="tab" data-tab="ratio" aria-selected="false">传动</button>
+    <button role="tab" data-tab="maths" aria-selected="false">算式</button>
+  </div>
+  <div class="info-body"><div class="info-content" id="infoContent"></div></div>
+</aside>
+
+<svg id="leaders" aria-hidden="true"></svg>
+<div class="tags" id="tags"></div>
+
+<section class="chart-card" id="chartCard">
+  <header class="chart-head">
+    <span class="chart-title">滑块位移 / 曲柄转角</span>
+    <span class="chart-value" id="chartValue">—</span>
+    <button class="chart-fold" id="chartFold" aria-label="折叠图表">
+      <svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+  </header>
+  <div class="chart-body">
+    <svg id="chartSvg" viewBox="0 0 260 86" preserveAspectRatio="none">
+      <g id="chartGrid"></g>
+      <polyline id="chartLine" fill="none" stroke="#1aa3a1" stroke-width="1.6" points=""/>
+      <line id="chartCursor" x1="0" y1="0" x2="0" y2="86" stroke="#c0652d" stroke-width="1" stroke-dasharray="2 2"/>
+      <circle id="chartDot" r="2.6" fill="#c0652d"/>
+      <text x="2" y="84" font-size="7" fill="#ada293" font-family="JetBrains Mono,monospace">0°</text>
+      <text x="228" y="84" font-size="7" fill="#ada293" font-family="JetBrains Mono,monospace">360°</text>
+      <text x="2" y="9" font-size="7" fill="#ada293" font-family="JetBrains Mono,monospace">s</text>
+    </svg>
+  </div>
+</section>
+
+<section class="lessons" aria-label="课程">
+  <div class="lesson-head">
+    <button class="pick" id="grpPick">
+      <span class="grp" id="grpTxt">基础机构</span>
+      <span>第 <b id="curNo">1</b> 课</span>
+    </button>
+    <span class="spacer"></span>
+    <span class="lesson-count" id="lessonCount">1 / 9</span>
+  </div>
+  <div class="lesson-row">
+    <div class="lesson-scroll" id="lessonScroll">
+      <ol class="lesson-list" id="lessonList"></ol>
+    </div>
+    <div class="lesson-nav">
+      <button class="lesson-prev" id="prevBtn" aria-label="上一课"><svg viewBox="0 0 24 24"><path d="m14.5 5.5-6.5 6.5 6.5 6.5"/></svg></button>
+      <button class="lesson-next" id="nextBtn" aria-label="下一课"><svg viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></svg></button>
+    </div>
+  </div>
+</section>
+
+<div class="viewbar" role="toolbar" aria-label="3D 视图">
+  <p class="view-hint">拖拽 / WASD 平移 · Q / E 旋转 · 滚轮缩放</p>
+  <button data-view="left" title="向左转 (Q)" aria-label="向左转"><svg viewBox="0 0 24 24"><path d="M4.5 10.5A8 8 0 1 1 6 17"/><path d="M4 5v5.8h5.8"/></svg></button>
+  <button data-view="right" title="向右转 (E)" aria-label="向右转"><svg viewBox="0 0 24 24"><path d="M19.5 10.5A8 8 0 1 0 18 17"/><path d="M20 5v5.8h-5.8"/></svg></button>
+  <span class="viewbar-sep"></span>
+  <button data-view="out" title="缩小 (−)" aria-label="缩小"><svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+  <button data-view="in" title="放大 (+)" aria-label="放大"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  <span class="viewbar-sep"></span>
+  <button data-view="reset" title="复位视角 (R)" aria-label="复位视角"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 5.2 14.2 12h-4.4z" class="fill"/><path d="M12 18.8 9.8 12h4.4z"/></svg></button>
+  <button data-view="top" title="俯视 (T)" aria-label="俯视"><svg viewBox="0 0 24 24"><rect x="4.5" y="7.5" width="15" height="12"/><path d="M8.5 11.5h7M8.5 15.5h4"/><path d="M12 1.8v3.6M10.2 3.6 12 5.4l1.8-1.8"/></svg></button>
+</div>
+
+<div id="tip" role="tooltip"><b></b><span></span></div>
+<div id="toast"></div>
+<div id="modal"><div class="box" id="modalBox"></div></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = id => document.getElementById(id);
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+
+/* ================= renderer ================= */
+const canvas = $('stage-canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.02;
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xf6eddd);
+scene.fog = new THREE.Fog(0xf6eddd, 30, 68);
+
+const camera = new THREE.PerspectiveCamera(38, innerWidth / innerHeight, 0.1, 200);
+const HOME_POS = new THREE.Vector3(12.6, 10.0, 15.8);
+const HOME_TARGET = new THREE.Vector3(-0.9, 2.4, 0.6);
+camera.position.copy(HOME_POS);
+
+const controls = new OrbitControls(camera, canvas);
+controls.target.copy(HOME_TARGET);
+controls.enableDamping = true;
+controls.dampingFactor = 0.075;
+controls.minDistance = 6;
+controls.maxDistance = 40;
+controls.maxPolarAngle = Math.PI * 0.48;
+controls.mouseButtons = { LEFT: THREE.MOUSE.ROTATE, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
+controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.05).texture;
+
+/* ================= lights ================= */
+scene.add(new THREE.HemisphereLight(0xfff6e6, 0xa8967e, 1.55));
+const sun = new THREE.DirectionalLight(0xfff1d8, 1.25);
+sun.position.set(9, 15, 8);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.left = sun.shadow.camera.bottom = -14;
+sun.shadow.camera.right = sun.shadow.camera.top = 14;
+sun.shadow.camera.far = 42;
+sun.shadow.bias = -0.0005;
+sun.shadow.normalBias = 0.02;
+scene.add(sun);
+const fill = new THREE.DirectionalLight(0xffe9cf, 1.15);
+fill.position.set(-11, 6, 9);
+scene.add(fill);
+const warm = new THREE.PointLight(0xffc98a, 6, 18, 2);
+warm.position.set(-3, 4.5, 4);
+scene.add(warm);
+
+/* ================= ground ================= */
+const ground = new THREE.Mesh(
+  new THREE.CircleGeometry(46, 72),
+  new THREE.MeshStandardMaterial({ color: 0xefe3d1, roughness: 1 })
+);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+const grid = new THREE.GridHelper(46, 46, 0xd9c9b0, 0xe4d6c1);
+grid.position.y = 0.012;
+grid.material.transparent = true;
+grid.material.opacity = 0.85;
+scene.add(grid);
+
+/* ================= materials ================= */
+const mat = (o) => new THREE.MeshStandardMaterial(o);
+const M = {
+  wood:    mat({ color: 0xb0824f, roughness: 0.82, metalness: 0.02 }),
+  woodTop: mat({ color: 0xc4945f, roughness: 0.7, metalness: 0.02 }),
+  iron:    mat({ color: 0x5b6678, roughness: 0.55, metalness: 0.5 }),
+  ironLt:  mat({ color: 0x7b8798, roughness: 0.5, metalness: 0.45 }),
+  steel:   mat({ color: 0xc4cdd9, roughness: 0.3, metalness: 0.85 }),
+  steelDk: mat({ color: 0x9aa5b4, roughness: 0.36, metalness: 0.8 }),
+  brass:   mat({ color: 0xc9a227, roughness: 0.3, metalness: 0.85 }),
+  copper:  mat({ color: 0xb46b3d, roughness: 0.34, metalness: 0.8 }),
+  red:     mat({ color: 0xb4543f, roughness: 0.45, metalness: 0.35 }),
+  blue:    mat({ color: 0x2f5f8a, roughness: 0.45, metalness: 0.4 }),
+  rubber:  mat({ color: 0x2b3240, roughness: 0.9, metalness: 0.05 }),
+  paper:   mat({ color: 0xf9f2e5, roughness: 0.95, metalness: 0 }),
+};
+
+const shadowify = (o) => o.traverse(m => {
+  if (m.isMesh) { m.castShadow = true; m.receiveShadow = true; }
+});
+const cyl = (rt, rb, h, m, seg = 40) => new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), m);
+const box = (w, h, d, m) => new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m);
+
+/* ================= geometry: involute-ish gear ================= */
+const MODULE = 0.052;
+const GEAR_T = 0.42;
+
+function gearGeometry(teeth, thickness, phase = 0) {
+  const rPitch = MODULE * teeth / 2;
+  const rTip = rPitch + MODULE * 0.82;
+  const rRoot = rPitch - MODULE * 1.05;
+  const shape = new THREE.Shape();
+  const N = teeth * 8;
+  for (let i = 0; i <= N; i++) {
+    const f = (i % 8) / 8;
+    // tooth: fast rise, flat top, fast fall, root arc
+    let rr = rRoot;
+    if (f < 0.18) rr = rRoot + (rTip - rRoot) * (f / 0.18);
+    else if (f < 0.42) rr = rTip;
+    else if (f < 0.62) rr = rTip - (rTip - rRoot) * ((f - 0.42) / 0.20);
+    const a = (i / N) * Math.PI * 2 + phase;
+    const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+    i === 0 ? shape.moveTo(x, y) : shape.lineTo(x, y);
+  }
+  shape.closePath();
+  const bore = new THREE.Path();
+  bore.absarc(0, 0, Math.max(0.22, rPitch * 0.18), 0, Math.PI * 2, true);
+  shape.holes.push(bore);
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth: thickness, bevelEnabled: true, bevelThickness: 0.022,
+    bevelSize: 0.022, bevelSegments: 2, curveSegments: 1
+  });
+  g.translate(0, 0, -thickness / 2);
+  g.rotateX(-Math.PI / 2);   // axis → Y
+  return g;
+}
+
+/* ================= layout constants ================= */
+const SHAFT_Y = 1.3;
+const MOTOR_X = -5.0;
+const GEAR_X = -3.12;
+const CAM_X = GEAR_X;
+const CAM_Z = -3.55;
+const PULLEY_X = -2.36;
+const CRANK_LOCAL_X = 2.55;
+const ROD_LEN = 1.9;
+
+let teethA = 14, teethB = 42;
+const TEETH_A = [14, 20, 28];
+const TEETH_B = [30, 42, 56];
+let crankR = 0.72;
+const CRANK_R = [0.45, 0.72, 0.95];
+/* the output shaft sits above the motor shaft, one pitch-radius apart,
+   so both gears stay visible from the front */
+let outY = SHAFT_Y + MODULE * (teethA + teethB) / 2;
+
+/* ================= bench ================= */
+const bench = new THREE.Group();
+{
+  const top = box(13.6, 0.34, 9.8, M.woodTop);
+  top.position.y = 0.17;
+  const edge = box(13.8, 0.12, 10.0, M.wood);
+  edge.position.y = -0.02;
+  bench.add(top, edge);
+  [[-6.1, -4.3], [6.1, -4.3], [-6.1, 4.3], [6.1, 4.3]].forEach(([x, z]) => {
+    const leg = box(0.46, 1.0, 0.46, M.wood);
+    leg.position.set(x, -0.5, z);
+    bench.add(leg);
+  });
+  // back rail with a paper name plate
+  const rail = box(12.4, 0.9, 0.18, M.wood);
+  rail.position.set(0, 0.62, -4.88);
+  const plate = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 0.62), M.paper);
+  plate.position.set(0, 0.66, -4.76);
+  bench.add(rail, plate);
+}
+shadowify(bench);
+scene.add(bench);
+
+/* bearing pedestal (height follows the shaft it carries) */
+function pedestal(x, z, axis = 'x', yTop = SHAFT_Y) {
+  const g = new THREE.Group();
+  const base = box(0.78, 0.16, 0.78, M.iron);
+  base.position.y = 0.08;
+  const hh = Math.max(0.12, yTop - 0.34);
+  const col = box(0.46, hh, 0.46, M.iron);
+  col.position.y = 0.16 + hh / 2;
+  const cap = cyl(0.28, 0.28, 0.54, M.ironLt, 24);
+  if (axis === 'x') cap.rotation.z = Math.PI / 2; else cap.rotation.x = Math.PI / 2;
+  cap.position.y = yTop;
+  const bolt1 = cyl(0.045, 0.045, 0.3, M.steel, 10);
+  bolt1.position.set(0.24, yTop + 0.26, 0);
+  g.add(base, col, cap, bolt1);
+  g.position.set(x, 0.34, z);
+  shadowify(g);
+  return g;
+}
+
+/* ================= motor ================= */
+const motor = new THREE.Group();
+motor.position.set(MOTOR_X, SHAFT_Y, 0);
+{
+  const body = cyl(0.66, 0.66, 1.6, M.blue, 40);
+  body.rotation.z = Math.PI / 2;
+  const capF = cyl(0.68, 0.62, 0.18, M.iron, 40);
+  capF.rotation.z = Math.PI / 2; capF.position.x = -0.85;
+  const capB = cyl(0.62, 0.68, 0.18, M.iron, 40);
+  capB.rotation.z = Math.PI / 2; capB.position.x = 0.85;
+  const shaft = cyl(0.11, 0.11, 1.5, M.steel, 20);
+  shaft.rotation.z = Math.PI / 2; shaft.position.x = 1.42;
+  motor.add(body, capF, capB, shaft);
+  // cooling fins
+  for (let i = 0; i < 7; i++) {
+    const fin = new THREE.Mesh(new THREE.TorusGeometry(0.665, 0.045, 8, 30), M.steelDk);
+    fin.rotation.y = Math.PI / 2;
+    fin.position.x = -0.62 + i * 0.21;
+    motor.add(fin);
+  }
+  // terminal box + wires
+  const tbox = box(0.42, 0.2, 0.34, M.iron);
+  tbox.position.set(0, 0.72, 0);
+  const w1 = cyl(0.035, 0.035, 1.1, M.red, 8);
+  w1.position.set(-0.2, 0.95, 0.16); w1.rotation.z = 0.16;
+  const w2 = cyl(0.035, 0.035, 1.1, M.rubber, 8);
+  w2.position.set(0.06, 0.95, 0.16); w2.rotation.z = 0.1;
+  motor.add(tbox, w1, w2);
+  // mount
+  const foot = box(1.9, 0.2, 1.05, M.iron);
+  foot.position.y = -0.76;
+  const stem = box(1.5, 0.5, 0.65, M.iron);
+  stem.position.y = -0.52;
+  motor.add(foot, stem);
+  motor.userData = { part: 'motor' };
+}
+shadowify(motor);
+scene.add(motor);
+scene.add(pedestal(MOTOR_X + 1.9, 0));
+
+/* motor rotor (shaft + pinion) — spins together */
+const rotor = new THREE.Group();
+rotor.position.set(MOTOR_X, SHAFT_Y, 0);
+scene.add(rotor);
+const motorShaftSpin = cyl(0.11, 0.11, 1.5, M.steel, 20);
+motorShaftSpin.rotation.z = Math.PI / 2;
+motorShaftSpin.position.x = 1.42;
+rotor.add(motorShaftSpin);
+/* ================= pinion (on motor rotor) ================= */
+const gearPulse = new THREE.Group();
+gearPulse.position.set(GEAR_X - MOTOR_X, 0, 0);   // local to the rotor
+rotor.add(gearPulse);
+let gearA = null;
+
+/* ================= crank shaft assembly ================= */
+const crankShaft = new THREE.Group();
+crankShaft.position.set(GEAR_X, outY, 0);
+scene.add(crankShaft);
+{
+  const bar = cyl(0.115, 0.115, 6.4, M.steel, 20);
+  bar.rotation.z = Math.PI / 2;
+  bar.position.x = 1.55;
+  crankShaft.add(bar);
+}
+let pedA = pedestal(GEAR_X - 1.15, 0, 'x', outY);
+let pedB = pedestal(GEAR_X + 3.45, 0, 'x', outY);
+scene.add(pedA, pedB);
+
+/* flywheel — on the output shaft */
+const flywheel = new THREE.Group();
+flywheel.position.x = 1.22;
+{
+  const rim = cyl(0.92, 0.92, 0.26, M.iron, 48);
+  rim.rotation.z = Math.PI / 2;
+  const face = cyl(0.86, 0.86, 0.28, M.steelDk, 48);
+  face.rotation.z = Math.PI / 2;
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(0.74, 0.045, 8, 40), M.steel);
+  ring.rotation.y = Math.PI / 2;
+  const hub = cyl(0.26, 0.26, 0.42, M.steel, 24);
+  hub.rotation.z = Math.PI / 2;
+  flywheel.add(rim, face, ring, hub);
+  for (let i = 0; i < 6; i++) {
+    const a = i / 6 * Math.PI * 2;
+    const bolt = cyl(0.05, 0.05, 0.3, M.brass, 10);
+    bolt.rotation.z = Math.PI / 2;
+    bolt.position.set(0, Math.cos(a) * 0.74, Math.sin(a) * 0.74);
+    flywheel.add(bolt);
+  }
+}
+shadowify(flywheel);
+crankShaft.add(flywheel);
+
+/* crank disk + pin */
+const crankDisk = cyl(0.52, 0.52, 0.22, M.red, 36);
+crankDisk.rotation.z = Math.PI / 2;
+crankDisk.position.x = CRANK_LOCAL_X;
+crankDisk.userData = { part: 'crank' };
+crankShaft.add(crankDisk);
+const crankPin = cyl(0.085, 0.085, 0.52, M.brass, 20);
+crankPin.rotation.z = Math.PI / 2;
+crankPin.position.set(CRANK_LOCAL_X + 0.26, crankR, 0);
+crankShaft.add(crankPin);
+const crankBoss = cyl(0.18, 0.18, 0.3, M.brass, 20);
+crankBoss.rotation.z = Math.PI / 2;
+crankBoss.position.x = CRANK_LOCAL_X;
+crankShaft.add(crankBoss);
+shadowify(crankDisk);
+
+/* cog belt pulleys (crank shaft → cam shaft) */
+function pulley() {
+  const g = new THREE.Group();
+  const core = cyl(0.34, 0.34, 0.2, M.ironLt, 32);
+  core.rotation.z = Math.PI / 2;
+  const f1 = cyl(0.38, 0.38, 0.035, M.steelDk, 32);
+  f1.rotation.z = Math.PI / 2; f1.position.x = 0.1;
+  const f2 = f1.clone(); f2.position.x = -0.1;
+  g.add(core, f1, f2);
+  for (let i = 0; i < 12; i++) {
+    const tooth = box(0.1, 0.1, 0.07, M.iron);
+    const a = i / 12 * Math.PI * 2;
+    tooth.position.set(0, Math.cos(a) * 0.35, Math.sin(a) * 0.35);
+    tooth.rotation.x = a;
+    g.add(tooth);
+  }
+  return g;
+}
+const crankPulley = pulley();
+crankPulley.position.x = PULLEY_X - GEAR_X;
+crankShaft.add(crankPulley);
+shadowify(crankPulley);
+
+/* ================= slider + guide ================= */
+const slider = new THREE.Group();
+{
+  const body = box(0.62, 0.62, 0.86, M.steel);
+  const pad = box(0.66, 0.24, 0.9, M.brass);
+  pad.position.y = 0.3;
+  const wrist = cyl(0.1, 0.1, 0.6, M.steelDk, 16);
+  wrist.rotation.z = Math.PI / 2;
+  wrist.position.z = -0.46;
+  slider.add(body, pad, wrist);
+  slider.userData = { part: 'slider' };
+}
+shadowify(slider);
+scene.add(slider);
+
+const railGroup = new THREE.Group();
+{
+  const base = box(1.55, 0.16, 3.0, M.iron);
+  base.position.y = -0.42;
+  railGroup.add(base);
+  [-1, 1].forEach(s => {
+    const rail = box(0.14, 0.34, 3.0, M.steelDk);
+    rail.position.set(s * 0.42, -0.05, 0);
+    railGroup.add(rail);
+  });
+  const endTop = box(1.5, 0.5, 0.16, M.iron);
+  endTop.position.set(0, 0.02, 1.5);
+  railGroup.add(endTop);
+}
+shadowify(railGroup);
+scene.add(railGroup);
+const railSupports = new THREE.Group();
+scene.add(railSupports);
+
+/* connecting rod */
+const rod = cyl(0.062, 0.062, 1, M.steelDk, 16);
+rod.geometry.translate(0, 0.5, 0);
+scene.add(rod);
+const rodEnd = cyl(0.145, 0.145, 0.1, M.ironLt, 20);
+rodEnd.rotation.z = Math.PI / 2;
+scene.add(rodEnd);
+const rodEnd2 = rodEnd.clone();
+scene.add(rodEnd2);
+shadowify(rod);
+
+/* ================= cam + follower ================= */
+const CAM_BASE = 0.55, LOBE = 0.42;
+const camProfile = (a) => CAM_BASE + Math.pow(Math.max(0, Math.cos(a - Math.PI / 2)), 3) * LOBE;
+
+let camDisc = null;
+const camShaft = new THREE.Group();
+camShaft.position.set(CAM_X, outY, CAM_Z);
+scene.add(camShaft);
+{
+  const bar = cyl(0.1, 0.1, 2.4, M.steel, 18);
+  bar.rotation.z = Math.PI / 2;
+  camShaft.add(bar);
+  const s = new THREE.Shape();
+  const N = 96;
+  for (let i = 0; i <= N; i++) {
+    const a = i / N * Math.PI * 2;
+    const rr = camProfile(a);
+    const x = Math.cos(a) * rr, y = Math.sin(a) * rr;
+    i === 0 ? s.moveTo(x, y) : s.lineTo(x, y);
+  }
+  s.closePath();
+  const bore = new THREE.Path(); bore.absarc(0, 0, 0.12, 0, Math.PI * 2, true); s.holes.push(bore);
+  const geo = new THREE.ExtrudeGeometry(s, { depth: 0.3, bevelEnabled: true, bevelThickness: 0.02, bevelSize: 0.02, bevelSegments: 2, curveSegments: 4 });
+  geo.translate(0, 0, -0.15);
+  geo.rotateY(Math.PI / 2);
+  const disc = new THREE.Mesh(geo, M.copper);
+  disc.position.x = 0.42;
+  disc.userData = { part: 'cam' };
+  camShaft.add(disc);
+  camDisc = disc;
+  shadowify(disc);
+}
+const camPulley = pulley();
+camPulley.position.x = PULLEY_X - CAM_X;
+camShaft.add(camPulley);
+shadowify(camPulley);
+let pedC1 = pedestal(CAM_X - 1.0, CAM_Z, 'x', outY);
+let pedC2 = pedestal(CAM_X + 1.0, CAM_Z, 'x', outY);
+scene.add(pedC1, pedC2);
+
+/* follower: roller on a guided stem */
+const FOLLOWER_X = CAM_X + 0.42;
+const roller = cyl(0.13, 0.13, 0.22, M.steel, 24);
+roller.rotation.z = Math.PI / 2;
+roller.userData = { part: 'cam' };
+scene.add(roller);
+const stem = cyl(0.058, 0.058, 1.5, M.steelDk, 16);
+stem.position.x = FOLLOWER_X;
+scene.add(stem);
+const guide = new THREE.Group();
+{
+  const collar = box(0.36, 0.3, 0.36, M.iron);
+  // bracket down to the cam bearing pedestal, so the guide is actually mounted
+  const arm = box(0.62, 0.12, 0.12, M.ironLt);
+  arm.position.set(0.29, -0.1, 0);
+  const leg = box(0.12, 1.2, 0.12, M.ironLt);
+  leg.position.set(0.58, -0.7, 0);
+  guide.add(collar, arm, leg);
+  guide.position.set(FOLLOWER_X, outY + 1.62, CAM_Z);
+}
+shadowify(guide);
+scene.add(guide);
+
+/* ================= belt ================= */
+const beltGroup = new THREE.Group();
+scene.add(beltGroup);
+function buildBelt() {
+  beltGroup.clear();
+  const y = outY, R = 0.355;
+  const z1 = CAM_Z, z2 = 0, len = z2 - z1, mid = (z1 + z2) / 2;
+  const top = box(0.16, 0.05, len, M.rubber);
+  top.position.set(PULLEY_X, y + R, mid);
+  const bot = box(0.16, 0.05, len, M.rubber);
+  bot.position.set(PULLEY_X, y - R, mid);
+  beltGroup.add(top, bot);
+  // belt tensioner bracket between the two shafts
+  const br = box(0.3, 0.1, 0.7, M.ironLt);
+  br.position.set(PULLEY_X, y + 0.62, mid);
+  beltGroup.add(br);
+  shadowify(beltGroup);
+}
+
+/* ================= brake (caliper on the flywheel) ================= */
+const brake = new THREE.Group();
+const brakePads = [];
+{
+  const post = box(0.16, 1.25, 0.2, M.iron);
+  post.position.set(0, 0.62, -0.62);
+  const arm = box(0.16, 0.18, 1.25, M.iron);
+  arm.position.set(0, 1.16, -0.05);
+  brake.add(post, arm);
+  [1, -1].forEach(s => {
+    const pad = box(0.34, 0.15, 0.5, M.red);
+    pad.position.set(0, s * 1.02, 0);
+    brakePads.push(pad);
+    brake.add(pad);
+  });
+  const lever = cyl(0.04, 0.04, 0.7, M.red, 12);
+  lever.position.set(0, 1.28, -0.72);
+  lever.rotation.x = -0.5;
+  const knob = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 10), M.red);
+  knob.position.set(0, 1.5, -1.0);
+  brake.add(lever, knob);
+  brake.userData = { part: 'brake' };
+}
+shadowify(brake);
+scene.add(brake);
+
+/* ================= gears build / rebuild ================= */
+const gearBGroup = new THREE.Group();
+scene.add(gearBGroup);
+let gearB = null;
+
+function buildGears() {
+  while (gearPulse.children.length) gearPulse.remove(gearPulse.children[0]);
+  while (gearBGroup.children.length) gearBGroup.remove(gearBGroup.children[0]);
+
+  gearA = new THREE.Mesh(gearGeometry(teethA, GEAR_T), M.brass);
+  gearA.rotation.z = Math.PI / 2;
+  gearA.userData = { part: 'gearA' };
+  gearPulse.add(gearA);
+  const hubA = cyl(0.2, 0.2, GEAR_T + 0.16, M.steelDk, 20);
+  hubA.rotation.z = Math.PI / 2;
+  gearPulse.add(hubA);
+
+  // half-tooth phase offset → teeth interleave with the pinion
+  gearB = new THREE.Mesh(gearGeometry(teethB, GEAR_T, Math.PI / teethB), M.steel);
+  gearB.rotation.z = Math.PI / 2;
+  gearB.userData = { part: 'gearB' };
+  gearBGroup.add(gearB);
+  const hubB = cyl(0.2, 0.2, GEAR_T + 0.16, M.ironLt, 20);
+  hubB.rotation.z = Math.PI / 2;
+  gearBGroup.add(hubB);
+  const key = box(0.34, 0.07, 0.09, M.brass);
+  key.position.set(0.42, 0.13, 0);
+  gearBGroup.add(key);
+
+  outY = SHAFT_Y + MODULE * (teethA + teethB) / 2;
+  gearBGroup.position.set(GEAR_X, outY, 0);
+  crankShaft.position.set(GEAR_X, outY, 0);
+  camShaft.position.y = outY;
+  guide.position.y = outY + 1.62;
+  brake.position.set(GEAR_X + 1.22, outY, 0);
+  [pedA, pedB, pedC1, pedC2].forEach(p => scene.remove(p));
+  pedA = pedestal(GEAR_X - 1.15, 0, 'x', outY);
+  pedB = pedestal(GEAR_X + 3.45, 0, 'x', outY);
+  pedC1 = pedestal(CAM_X - 1.0, CAM_Z, 'x', outY);
+  pedC2 = pedestal(CAM_X + 1.0, CAM_Z, 'x', outY);
+  scene.add(pedA, pedB, pedC1, pedC2);
+  buildBelt();
+  shadowify(gearPulse);
+  shadowify(gearBGroup);
+  syncCrankPin();
+  placeSliderRig();
+}
+
+function syncCrankPin() {
+  crankPin.position.y = crankR;
+  crankBoss.position.y = 0;
+}
+
+function placeSliderRig() {
+  const x = GEAR_X + CRANK_LOCAL_X + 0.26;
+  railGroup.position.set(x, outY, ROD_LEN);
+  slider.position.set(x, outY, ROD_LEN);
+  railSupports.clear();
+  const h = Math.max(0.1, outY - 0.34 - 0.42);
+  [-1.1, 1.1].forEach(dz => {
+    const post = box(0.22, h, 0.22, M.iron);
+    post.position.set(x, 0.34 + h / 2, ROD_LEN + dz);
+    railSupports.add(post);
+  });
+  shadowify(railSupports);
+}
+/* ================= state ================= */
+const state = {
+  on: true, brake: false, slow: false, tags: true,
+  rpm: 0, rated: 1200,
+  aMotor: 0, aOut: 0,
+  shadow: true,
+};
+const ratio = () => teethB / teethA;
+
+/* ================= motion ================= */
+const pinPos = new THREE.Vector3();
+
+function updateMotion(dt) {
+  const target = state.on ? (state.brake ? state.rated * 0.55 : state.rated) : 0;
+  state.rpm += (target - state.rpm) * Math.min(1, dt * (state.on ? 2.4 : 3.2));
+  const vis = state.slow ? 0.022 : 0.085;
+  const w = state.rpm / 60 * Math.PI * 2 * vis;
+  state.aMotor += w * dt;
+  state.aOut = -state.aMotor / ratio();
+
+  rotor.rotation.x = state.aMotor;
+  gearBGroup.rotation.x = state.aOut;
+  crankShaft.rotation.x = state.aOut;
+  camShaft.rotation.x = state.aOut;
+
+  // crank pin in world space
+  const px = GEAR_X + CRANK_LOCAL_X + 0.26;
+  const py = outY + crankR * Math.cos(state.aOut);
+  const pz = crankR * Math.sin(state.aOut);
+  pinPos.set(px, py, pz);
+
+  // slider constrained to the rail line
+  const dz = Math.sqrt(Math.max(0.04, ROD_LEN * ROD_LEN - (py - outY) * (py - outY)));
+  const sz = pz + dz;
+  slider.position.set(px, outY, sz);
+
+  // connecting rod
+  const end = new THREE.Vector3(px, outY, sz - 0.50);
+  rod.position.copy(pinPos);
+  const dir = end.clone().sub(pinPos);
+  const len = dir.length();
+  rod.scale.set(1, len, 1);
+  rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+  rodEnd.position.copy(pinPos);
+  rodEnd2.position.copy(end);
+
+  // cam follower — roller stays in contact with the profile
+  const lift = Math.pow(Math.max(0, Math.cos(state.aOut)), 3) * LOBE;
+  const rollerY = outY + CAM_BASE + lift + 0.13;
+  roller.position.set(FOLLOWER_X, rollerY, CAM_Z);
+  const stemLen = Math.max(0.3, (outY + 1.62) - (rollerY + 0.11));
+  stem.scale.set(1, stemLen / 1.5, 1);
+  stem.position.y = rollerY + 0.11 + stemLen / 2;
+
+  // brake pads squeeze the flywheel rim
+  const gap = 1.02 - (state.brake ? 0.075 : 0);
+  brakePads[0].position.y = gap;
+  brakePads[1].position.y = -gap;
+}
+
+/* ================= callout tags ================= */
+const TAGS = [
+  { id: 'motor', label: ['电机', 'Motor'], off: [-206, -128], get: () => `${Math.round(state.rpm)} RPM` },
+  { id: 'gear', label: ['齿轮组', 'Gears'], off: [-30, -160], get: () => `z ${teethA} × ${teethB} = i ${ratio().toFixed(2)}` },
+  { id: 'crank', label: ['曲柄', 'Crank'], off: [176, -66], get: () => `r ${Math.round(crankR * 100)} mm` },
+  { id: 'cam', label: ['凸轮', 'Cam'], off: [-186, -30], get: () => `升程 ${Math.round(LOBE * 100)} mm` },
+];
+const tagsEl = $('tags'), leaders = $('leaders');
+const tagNodes = TAGS.map(t => {
+  const el = document.createElement('div');
+  el.className = 'tag';
+  el.innerHTML = `<span class="tk"></span><span class="tv"></span>`;
+  tagsEl.appendChild(el);
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('r', '2.4');
+  leaders.appendChild(path); leaders.appendChild(dot);
+  return { el, path, dot, key: el.querySelector('.tk'), val: el.querySelector('.tv') };
+});
+const anchor = new THREE.Vector3();
+const proj = new THREE.Vector3();
+
+function tagAnchor(i, v) {
+  if (i === 0) v.set(MOTOR_X + 0.2, SHAFT_Y + 0.82, 0.1);
+  else if (i === 1) v.set(GEAR_X, outY + MODULE * teethB / 2 + 0.06, 0.1);
+  else if (i === 2) v.set(GEAR_X + CRANK_LOCAL_X, outY + crankR, 0);
+  else v.set(FOLLOWER_X - 0.1, outY + CAM_BASE + 0.1, CAM_Z);
+}
+
+function updateTags(show) {
+  tagNodes.forEach((n, i) => {
+    tagAnchor(i, anchor);
+    proj.copy(anchor).project(camera);
+    const behind = proj.z > 1 || proj.z < -1;
+    if (!show || behind) {
+      n.el.style.opacity = 0; n.path.style.opacity = 0; n.dot.style.opacity = 0;
+      return;
+    }
+    const sx = (proj.x * 0.5 + 0.5) * innerWidth;
+    const sy = (-proj.y * 0.5 + 0.5) * innerHeight;
+    n.key.textContent = pick(TAGS[i].label);
+    n.val.textContent = TAGS[i].get();
+    // keep labels clear of the info card on the right
+    const rightEdge = innerWidth - (innerWidth > 900 ? 346 : 12);
+    const tx = clamp(sx + TAGS[i].off[0], 96, Math.max(96, rightEdge - n.el.offsetWidth));
+    const ty = clamp(sy + TAGS[i].off[1], 96, innerHeight - 190);
+    n.el.style.left = tx + 'px';
+    n.el.style.top = ty + 'px';
+    n.el.style.opacity = 1;
+    n.path.style.opacity = 0.55; n.dot.style.opacity = 1;
+    n.dot.setAttribute('cx', sx); n.dot.setAttribute('cy', sy);
+    const ex = tx, ey = ty + (TAGS[i].off[1] < 0 ? 16 : -16);
+    const midY = sy + (ey - sy) * 0.55;
+    n.path.setAttribute('d', `M${sx} ${sy} L${sx} ${midY} L${ex} ${midY} L${ex} ${ey}`);
+  });
+}
+
+/* ================= chart ================= */
+let chartPoints = '';
+function buildChart() {
+  const W = 260, H = 86, PAD = 8;
+  const g = $('chartGrid');
+  g.innerHTML = '';
+  for (let i = 0; i <= 4; i++) {
+    const y = PAD + (H - PAD * 2) * i / 4;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', 0); line.setAttribute('x2', W);
+    line.setAttribute('y1', y); line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#e2d7c7'); line.setAttribute('stroke-width', '1');
+    g.appendChild(line);
+  }
+  const pts = [];
+  const N = 120;
+  for (let i = 0; i <= N; i++) {
+    const a = i / N * Math.PI * 2;
+    const s = Math.sin(a) * crankR + Math.sqrt(ROD_LEN * ROD_LEN - Math.pow(crankR * Math.cos(a), 2));
+    const t = (s - (ROD_LEN - crankR)) / (2 * crankR);
+    const x = W * i / N;
+    const y = H - PAD - (H - PAD * 2) * clamp(t, 0, 1);
+    pts.push(`${x.toFixed(1)},${y.toFixed(1)}`);
+  }
+  chartPoints = pts.join(' ');
+  $('chartLine').setAttribute('points', chartPoints);
+}
+
+function updateChartCursor() {
+  const W = 260, H = 86, PAD = 8;
+  let a = state.aOut % (Math.PI * 2);
+  if (a < 0) a += Math.PI * 2;
+  const x = W * a / (Math.PI * 2);
+  const s = Math.sin(a) * crankR + Math.sqrt(ROD_LEN * ROD_LEN - Math.pow(crankR * Math.cos(a), 2));
+  const t = (s - (ROD_LEN - crankR)) / (2 * crankR);
+  const y = H - PAD - (H - PAD * 2) * clamp(t, 0, 1);
+  $('chartCursor').setAttribute('x1', x); $('chartCursor').setAttribute('x2', x);
+  $('chartDot').setAttribute('cx', x); $('chartDot').setAttribute('cy', y);
+  $('chartValue').textContent = `${Math.round(t * 100)}% · ${Math.round(a * 180 / Math.PI)}°`;
+}
+/* ================= content ================= */
+const GROUPS = [
+  { zh: '基础机构', en: 'Basics' },
+  { zh: '运动转换', en: 'Motion' },
+  { zh: '整机', en: 'Assembly' },
+];
+
+const LESSONS = [
+  { key: 'motor', grp: 0,
+    zh: ['电机：动力从哪来', '电机把电能变成旋转，转速用 RPM 衡量。它的伸出轴上装着主动小齿轮——整台机器所有的运动，都从这里开始。', '点击电机：启动 / 停止，观察整条传动链一起停下。'],
+    en: ['Motor: where power begins', 'A motor turns electricity into rotation, measured in RPM. Its shaft carries the driving pinion — every motion on this bench starts here.', 'Click the motor to start / stop; the whole train follows.'] },
+  { key: 'gearA', grp: 0,
+    zh: ['齿轮：啮合与转向', '两个外啮合齿轮转向相反，齿必须一齿对一槽地咬合。主动轮齿数越少，转得越快、扭矩越小。', '点击小齿轮：在 14 / 20 / 28 齿之间切换。'],
+    en: ['Gears: meshing & direction', 'Externally meshed gears turn in opposite directions, tooth into gap. Fewer teeth on the driver means faster but weaker output.', 'Click the pinion to switch 14 / 20 / 28 teeth.'] },
+  { key: 'gearB', grp: 0,
+    zh: ['传动比：减速增扭', '传动比 i = 从动轮齿数 ÷ 主动轮齿数。转速除以 i，扭矩乘以 i——减速的同时力气变大，这就是变速箱的全部秘密。', '点击大齿轮换齿数，看右侧与图表的数字如何联动。'],
+    en: ['Gear ratio: trade speed for torque', 'Ratio i = driven teeth ÷ driving teeth. Speed divides by i, torque multiplies by it — the whole idea behind a gearbox.', 'Click the large gear and watch the numbers respond.'] },
+  { key: 'shaft', grp: 1,
+    zh: ['轴与键：把扭矩送出去', '轴让零件共用一个回转中心，键嵌在轴与轮毂之间防止打滑。仔细看：大齿轮、飞轮、曲柄、带轮装在<b>同一根轴</b>上，转角永远相同。', '绕到侧面看：四件东西确实共用一根轴。'],
+    en: ['Shafts & keys: carrying torque', 'A shaft gives parts a common axis; a key stops the hub slipping. Look closely: gear, flywheel, crank and pulley share <b>one shaft</b> and therefore one angle.', 'Orbit around and check they really share one shaft.'] },
+  { key: 'crank', grp: 1,
+    zh: ['曲柄：转动变周期运动', '曲柄是把圆盘偏心装在一根轴上。轴每转一圈，曲柄销就画出一个半径 r 的圆，把均匀旋转变成往复。', '点击曲柄：在 r = 45 / 72 / 95 mm 之间切换。'],
+    en: ['Crank: rotation into a cycle', 'A crank is a disk mounted off-centre. Every revolution, the crank pin traces a circle of radius r, turning steady spin into reciprocation.', 'Click the crank to cycle r = 45 / 72 / 95 mm.'] },
+  { key: 'slider', grp: 1,
+    zh: ['曲柄滑块：转动变直线', '连杆长度 L 固定，滑块被导轨约束在一条直线上。曲柄转一圈，滑块来回一次；行程 s = 2r，但速度并不均匀——中间快、两端慢。', '看左下图表：横轴是曲柄转角，纵轴是滑块位移。'],
+    en: ['Crank-slider: rotation into a line', 'The rod has fixed length L and the slider is held on a straight line. One crank turn = one stroke; stroke s = 2r, but speed is uneven — fast mid-stroke, slow at the ends.', 'Watch the chart: crank angle across, slider displacement up.'] },
+  { key: 'cam', grp: 1,
+    zh: ['凸轮：形状就是程序', '凸轮由一根同步带带动，与曲柄 1:1 同速。推杆的升程完全由轮廓决定：基圆之外凸起多高，推杆就抬多高。', '点击凸轮，观察滚子在轮廓上起伏。'],
+    en: ['Cam: shape is the program', 'The cam is belt-driven at the same speed as the crank. Follower lift is decided purely by the profile: the height above the base circle is the lift.', 'Click the cam and watch the roller ride its profile.'] },
+  { key: 'brake', grp: 2,
+    zh: ['摩擦与负载', '制动器让摩擦片压紧飞轮，把动能变成热。负载一上来，电机就掉速——转速不是恒定的，它取决于你让它干了多少活。', '点击制动器：接合 / 松开，听转速变化。'],
+    en: ['Friction & load', 'The caliper presses pads onto the flywheel and turns kinetic energy into heat. Add load and the motor slows — speed is never free.', 'Click the brake to engage / release and watch RPM drop.'] },
+  { key: 'bench', grp: 2,
+    zh: ['整机：一条完整的传动链', '电机 → 小齿轮 → 大齿轮 → 同轴曲柄 → 连杆 → 滑块；同一根轴上的带轮 → 凸轮 → 推杆。改任何一个环节，下游全部跟着变。', '试试：28 齿 + 56 齿 + 最大曲柄半径，再踩下制动器。'],
+    en: ['The bench: one complete drivetrain', 'Motor → pinion → gear → crank on the same shaft → rod → slider; pulley → belt → cam → follower. Change any link and everything downstream responds.', 'Try 28 + 56 teeth with the longest crank, then apply the brake.'] },
+];
+
+const PT = {
+  motor: { zh: ['电机', '动力源'], en: ['Motor', 'Power source'] },
+  gearA: { zh: ['小齿轮', '主动轮'], en: ['Pinion', 'Driver'] },
+  gearB: { zh: ['大齿轮', '从动轮'], en: ['Gear', 'Driven'] },
+  crank: { zh: ['曲柄', '转换件'], en: ['Crank', 'Converter'] },
+  slider: { zh: ['滑块', '执行件'], en: ['Slider', 'Output'] },
+  cam: { zh: ['凸轮 + 推杆', '从动件'], en: ['Cam + follower', 'Follower'] },
+  brake: { zh: ['制动器', '负载'], en: ['Brake', 'Load'] },
+};
+
+const UI = {
+  zh: {
+    tabs: ['概述', '零件', '传动', '算式'],
+    lesson: '第', lessonUnit: '课',
+    partsTitle: '传动链上的零件', partsSub: '点击条目定位课程',
+    ratioTitle: '传动比与运动参数',
+    mathsTitle: '这节课用到的公式',
+    live: '实时',
+    roMotor: '电机转速', roOut: '输出转速', roRatio: '传动比', roStroke: '滑块行程', roCam: '凸轮升程',
+    stateOn: '运转中', stateOff: '已停机', stateLoad: '带负载',
+    toastMotorOn: '电机启动', toastMotorOff: '电机停止',
+    toastA: z => `小齿轮改为 ${z} 齿`, toastB: z => `大齿轮改为 ${z} 齿`,
+    toastCrank: r => `曲柄半径改为 ${r} mm`, toastBrakeOn: '制动器接合：电机掉速', toastBrakeOff: '制动器松开',
+    done: '已完成',
+  },
+  en: {
+    tabs: ['Overview', 'Parts', 'Drive', 'Maths'],
+    lesson: 'Lesson', lessonUnit: '',
+    partsTitle: 'Parts on the drivetrain', partsSub: 'Click an entry to jump to its lesson',
+    ratioTitle: 'Ratio & motion',
+    mathsTitle: 'Formulas used here',
+    live: 'live',
+    roMotor: 'Motor speed', roOut: 'Output speed', roRatio: 'Ratio', roStroke: 'Slider stroke', roCam: 'Cam lift',
+    stateOn: 'Running', stateOff: 'Stopped', stateLoad: 'Under load',
+    toastMotorOn: 'Motor started', toastMotorOff: 'Motor stopped',
+    toastA: z => `Pinion set to ${z} teeth`, toastB: z => `Gear set to ${z} teeth`,
+    toastCrank: r => `Crank radius set to ${r} mm`, toastBrakeOn: 'Brake engaged: RPM drops', toastBrakeOff: 'Brake released',
+    done: 'Done',
+  },
+};
+let lang = localStorage.getItem('mech101-lang') || 'zh';
+const t = k => UI[lang][k];
+const pick = a => Array.isArray(a)
+  ? (lang === 'zh' ? a[0] : a[1])
+  : (lang === 'zh' ? a.zh : a.en);
+
+/* ================= state persisted ================= */
+let done = new Set(JSON.parse(localStorage.getItem('mech101-done') || '[]'));
+let cur = 0, curTab = 'overview';
+const saveDone = () => localStorage.setItem('mech101-done', JSON.stringify([...done]));
+
+/* ================= live values ================= */
+const liveOut = () => Math.round(state.rpm / ratio());
+function statFor(i) {
+  const k = LESSONS[i].key;
+  if (k === 'motor') return `${Math.round(state.rpm)} RPM`;
+  if (k === 'gearA') return `z = ${teethA}`;
+  if (k === 'gearB') return `i = ${ratio().toFixed(2)}`;
+  if (k === 'shaft') return `同轴 ${lang === 'zh' ? '4 件' : '×4'}`;
+  if (k === 'crank') return `r = ${Math.round(crankR * 100)} mm`;
+  if (k === 'slider') return `s = ${Math.round(crankR * 200)} mm`;
+  if (k === 'cam') return `h = ${Math.round(LOBE * 100)} mm`;
+  if (k === 'brake') return state.brake ? t('stateLoad') : t('stateOn');
+  return `${liveOut()} RPM`;
+}
+
+/* ================= render info ================= */
+const infoContent = $('infoContent');
+function renderTabs() {
+  document.querySelectorAll('.tabs button').forEach((b, i) => {
+    b.textContent = t('tabs')[i];
+    b.classList.toggle('is-active', b.dataset.tab === curTab);
+    b.setAttribute('aria-selected', b.dataset.tab === curTab);
+  });
+}
+
+function renderInfo() {
+  const L = LESSONS[cur];
+  const txt = lang === 'zh' ? L.zh : L.en;
+  const grp = pick(GROUPS[L.grp]);
+  const no = String(cur + 1).padStart(2, '0');
+
+  if (curTab === 'overview') {
+    infoContent.innerHTML = `
+      <div class="eyebrow">${grp} · ${no}</div>
+      <h2>${txt[0]}</h2>
+      <p>${txt[1]}</p>
+      <div class="callout">${txt[2]}</div>`;
+  } else if (curTab === 'parts') {
+    const list = Object.entries(PT).map(([k, v]) => {
+      const li = LESSONS.findIndex(x => x.key === k);
+      return `<li data-lesson="${li}"><span class="dot"></span>${pick(v)}<small>${statFor(li < 0 ? cur : li)}</small></li>`;
+    }).join('');
+    infoContent.innerHTML = `<div class="eyebrow">${t('live')}</div><h2>${t('partsTitle')}</h2>
+      <p style="font-size:11.5px;color:var(--muted)">${t('partsSub')}</p>
+      <ul class="parts-list">${list}</ul>`;
+    infoContent.querySelectorAll('.parts-list li').forEach(li => {
+      li.onclick = () => { const i = +li.dataset.lesson; if (i >= 0) selectLesson(i); };
+    });
+  } else if (curTab === 'ratio') {
+    infoContent.innerHTML = `
+      <div class="eyebrow">i = ${ratio().toFixed(2)}</div>
+      <h2>${t('ratioTitle')}</h2>
+      <div class="formula">i = z₂ / z₁ = ${teethB} / ${teethA} = ${ratio().toFixed(2)}<br>
+      n_out = ${Math.round(state.rpm)} / ${ratio().toFixed(2)} = ${liveOut()} RPM<br>
+      s = 2r = ${Math.round(crankR * 200)} mm</div>
+      <dl class="dl">
+        <div><dt>${t('roMotor')}</dt><dd>${Math.round(state.rpm)} RPM</dd></div>
+        <div><dt>${t('roRatio')}</dt><dd>1 : ${ratio().toFixed(2)}</dd></div>
+        <div><dt>${t('roOut')}</dt><dd>${liveOut()} RPM</dd></div>
+        <div><dt>${t('roStroke')}</dt><dd>${Math.round(crankR * 200)} mm</dd></div>
+        <div><dt>${t('roCam')}</dt><dd>${Math.round(LOBE * 100)} mm</dd></div>
+        <div><dt>${lang === 'zh' ? '状态' : 'State'}</dt><dd>${!state.on ? t('stateOff') : state.brake ? t('stateLoad') : t('stateOn')}</dd></div>
+      </dl>`;
+  } else {
+    infoContent.innerHTML = `
+      <div class="eyebrow">${lang === 'zh' ? '推导' : 'Derivation'}</div>
+      <h2>${t('mathsTitle')}</h2>
+      <div class="formula">i = z₂ / z₁<br>n_out = n_in / i<br>M_out = M_in · i<br>s = 2r<br>
+      x(θ) = r·sin θ + √(L² − r²cos²θ)</div>
+      <p>${lang === 'zh'
+        ? '齿数比决定转速比；曲柄半径决定行程；连杆长度决定滑块速度曲线的"胖瘦"。三者互相独立，可以单独调。'
+        : 'Tooth counts set the speed ratio, crank radius sets the stroke, and rod length sets how peaky the slider velocity curve is. Each can be tuned independently.'}</p>`;
+  }
+  renderTabs();
+}
+/* ================= lessons UI ================= */
+const lessonList = $('lessonList');
+const lessonLis = LESSONS.map((L, i) => {
+  const li = document.createElement('li');
+  li.innerHTML = `<span class="no">${String(i + 1).padStart(2, '0')}<span class="ck">✓</span></span>
+    <span class="tt"></span><span class="st"></span>`;
+  li.addEventListener('click', () => selectLesson(i));
+  lessonList.appendChild(li);
+  return li;
+});
+
+function renderLessons() {
+  LESSONS.forEach((L, i) => {
+    const li = lessonLis[i];
+    li.querySelector('.tt').textContent = (lang === 'zh' ? L.zh : L.en)[0];
+    li.querySelector('.st').textContent = statFor(i);
+    li.classList.toggle('is-active', i === cur);
+    li.classList.toggle('done', done.has(i));
+  });
+  const grp = pick(GROUPS[LESSONS[cur].grp]);
+  $('grpTxt').textContent = grp;
+  $('curNo').textContent = cur + 1;
+  $('lessonCount').textContent = `${cur + 1} / ${LESSONS.length}`;
+  $('progressLabel').textContent = grp;
+  $('progressCount').textContent = `${done.size}/${LESSONS.length}`;
+  $('progressFill').style.width = `${done.size / LESSONS.length * 100}%`;
+  $('prevBtn').disabled = cur === 0;
+  $('nextBtn').disabled = cur === LESSONS.length - 1;
+  lessonLis[cur].scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+}
+
+/* camera focus per lesson */
+const FOCUS = {
+  motor:  { t: [MOTOR_X + 0.2, SHAFT_Y, 0], d: 11.2 },
+  gearA:  { t: [GEAR_X, (SHAFT_Y + outY) / 2, 0.4], d: 9.6 },
+  gearB:  { t: [GEAR_X, outY, 0.4], d: 10.6 },
+  shaft:  { t: [GEAR_X + 1.6, outY, 0.2], d: 11.6 },
+  crank:  { t: [GEAR_X + CRANK_LOCAL_X, outY, 0], d: 9.8 },
+  slider: { t: [GEAR_X + CRANK_LOCAL_X, outY, ROD_LEN], d: 10.4 },
+  cam:    { t: [FOLLOWER_X, outY + 0.8, CAM_Z], d: 9.6 },
+  brake:  { t: [GEAR_X + 1.22, outY, 0], d: 10.2 },
+  bench:  { t: [-0.9, 2.3, 0.6], d: null },
+};
+
+let camAnim = false;
+const camGoalPos = new THREE.Vector3();
+const camGoalTarget = new THREE.Vector3();
+
+function flyTo(pos, target) {
+  camGoalPos.copy(pos); camGoalTarget.copy(target);
+  camAnim = true;
+}
+
+function focusLesson(key) {
+  const f = FOCUS[key] || FOCUS.bench;
+  const target = new THREE.Vector3(...f.t);
+  const dir = camera.position.clone().sub(controls.target).normalize();
+  const dist = f.d || camera.position.distanceTo(controls.target);
+  const pos = target.clone().add(dir.multiplyScalar(dist));
+  flyTo(pos, target);
+}
+
+function selectLesson(i) {
+  cur = i;
+  if (!done.has(i)) { done.add(i); saveDone(); }
+  renderLessons();
+  renderInfo();
+  focusLesson(LESSONS[i].key);
+  closeModal();
+}
+
+/* ================= i18n / chrome ================= */
+function applyLang() {
+  $('langTxt').textContent = lang === 'zh' ? 'EN' : '中';
+  renderTabs();
+  renderLessons();
+  renderInfo();
+}
+$('langBtn').onclick = () => {
+  lang = lang === 'zh' ? 'en' : 'zh';
+  localStorage.setItem('mech101-lang', lang);
+  applyLang();
+};
+
+document.querySelectorAll('.tabs button').forEach(b => {
+  b.onclick = () => { curTab = b.dataset.tab; renderInfo(); };
+});
+$('prevBtn').onclick = () => { if (cur > 0) selectLesson(cur - 1); };
+$('nextBtn').onclick = () => { if (cur < LESSONS.length - 1) selectLesson(cur + 1); };
+$('grpPick').onclick = () => openView('lessons');
+$('chartFold').onclick = () => $('chartCard').classList.toggle('folded');
+
+/* clock */
+function tickClock() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  $('clockDate').textContent = `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
+  $('clockTime').textContent = `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+setInterval(tickClock, 1000); tickClock();
+
+/* toast */
+let toastT;
+function toast(msg) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 1700);
+}
+/* ================= modal ================= */
+const modal = $('modal'), modalBox = $('modalBox');
+function closeModal() { modal.classList.remove('show'); }
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+const PART_DESC = {
+  motor: { zh: '把电能变成旋转，空载约 1200 RPM。', en: 'Turns electricity into rotation, ~1200 RPM unloaded.' },
+  gearA: { zh: '主动轮，直接装在电机轴上。', en: 'Driver, mounted straight on the motor shaft.' },
+  gearB: { zh: '从动轮，与曲柄共用一根输出轴。', en: 'Driven gear, sharing the output shaft with the crank.' },
+  crank: { zh: '偏心圆盘，把旋转变成往复。', en: 'Off-centre disk turning spin into reciprocation.' },
+  slider: { zh: '导轨里的执行件，行程 s = 2r。', en: 'The output in the rails, stroke s = 2r.' },
+  cam: { zh: '同步带驱动，轮廓决定推杆升程。', en: 'Belt-driven; profile sets follower lift.' },
+  brake: { zh: '摩擦片压紧飞轮，给电机加负载。', en: 'Pads squeeze the flywheel to load the motor.' },
+};
+
+function openModal(html) {
+  modalBox.innerHTML = `<button class="close" aria-label="关闭"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>` + html;
+  modalBox.querySelector('.close').onclick = closeModal;
+  modal.classList.add('show');
+}
+
+function openView(v) {
+  if (v === 'home') {
+    openModal(`
+      <h2>${lang === 'zh' ? '欢迎来到机械入门' : 'Welcome to Mechanical 101'}</h2>
+      <div class="msub">${lang === 'zh' ? '一台可以拆着玩的 3D 教学台架' : 'A teaching bench you can take apart'}</div>
+      <p class="lede">${lang === 'zh'
+        ? '这里有一条真实的传动链：电机 → 减速齿轮 → 同轴曲柄 → 连杆滑块，同一根轴上的带轮再带动凸轮。九个零件，九节课，每个都能点。'
+        : 'Here is one real drivetrain: motor → reduction gears → crank on the same shaft → rod and slider, with a belt from that shaft to a cam. Nine parts, nine lessons, all clickable.'}</p>
+      <div class="formula">${lang === 'zh'
+        ? '点击发光零件 → 改变参数<br>Q / E 旋转 · WASD 平移 · 滚轮缩放<br>R 复位 · T 俯视 · 空格 启停电机'
+        : 'Click a part → change its parameter<br>Q / E orbit · WASD pan · scroll zoom<br>R reset · T top view · Space motor on/off'}</div>
+      <button class="btn" id="homeGo" style="margin-top:16px">${lang === 'zh' ? '从第 1 课开始' : 'Start lesson 1'}</button>`);
+    $('homeGo').onclick = () => selectLesson(0);
+  } else if (v === 'lessons') {
+    const rows = LESSONS.map((L, i) => {
+      const txt = (lang === 'zh' ? L.zh : L.en)[0];
+      return `<div class="ci" data-i="${i}"><h3>${String(i + 1).padStart(2, '0')} · ${txt}</h3>
+        <p>${pick(GROUPS[L.grp])} — ${statFor(i)}</p></div>`;
+    }).join('');
+    openModal(`<h2>${lang === 'zh' ? '九节课' : 'Nine lessons'}</h2>
+      <div class="msub">${done.size} / ${LESSONS.length} ${lang === 'zh' ? '已完成' : 'complete'}</div>${rows}`);
+    modalBox.querySelectorAll('.ci').forEach(el => {
+      el.onclick = () => selectLesson(+el.dataset.i);
+    });
+  } else if (v === 'parts') {
+    const rows = Object.entries(PT).map(([k, v]) => {
+      const i = LESSONS.findIndex(x => x.key === k);
+      return `<div class="ci" data-i="${i}"><h3>${pick(v)}</h3><p>${pick(PART_DESC[k])}</p></div>`;
+    }).join('');
+    openModal(`<h2>${lang === 'zh' ? '零件库' : 'Parts library'}</h2>
+      <div class="msub">${lang === 'zh' ? '点击条目跳到对应课程，并在 3D 中定位' : 'Click an entry to jump to its lesson and focus it in 3D'}</div>${rows}`);
+    modalBox.querySelectorAll('.ci').forEach(el => {
+      el.onclick = () => { const i = +el.dataset.i; if (i >= 0) selectLesson(i); };
+    });
+  } else {
+    openModal(`<h2>${lang === 'zh' ? '设置' : 'Settings'}</h2>
+      <div class="msub">${lang === 'zh' ? '显示与演示选项' : 'Display and demo options'}</div>
+      <div class="set-row"><span>${lang === 'zh' ? '阴影' : 'Shadows'}</span><button class="sw ${state.shadow ? 'on' : ''}" data-set="shadow" aria-label="阴影"></button></div>
+      <div class="set-row"><span>${lang === 'zh' ? '慢速演示' : 'Slow demo'}</span><button class="sw ${state.slow ? 'on' : ''}" data-set="slow" aria-label="慢速演示"></button></div>
+      <div class="set-row"><span>${lang === 'zh' ? '零件标注' : 'Callouts'}</span><button class="sw ${state.tags ? 'on' : ''}" data-set="tags" aria-label="零件标注"></button></div>
+      <div class="set-row"><span>${lang === 'zh' ? '课程进度' : 'Lesson progress'}</span>
+        <button class="btn" id="resetProgress" style="padding:5px 12px;font-size:10.5px">${lang === 'zh' ? '清除' : 'Clear'}</button></div>`);
+    modalBox.querySelectorAll('.sw').forEach(sw => {
+      sw.onclick = () => {
+        const k = sw.dataset.set;
+        if (k === 'shadow') {
+          state.shadow = !state.shadow;
+          renderer.shadowMap.enabled = state.shadow;
+          scene.traverse(o => { if (o.material) o.material.needsUpdate = true; });
+        } else state[k] = !state[k];
+        sw.classList.toggle('on', state[k]);
+      };
+    });
+    $('resetProgress').onclick = () => {
+      done.clear(); saveDone(); renderLessons();
+      toast(lang === 'zh' ? '进度已清除' : 'Progress cleared');
+    };
+  }
+}
+
+document.querySelectorAll('.rail button[data-view]').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.rail button[data-view]').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    openView(b.dataset.view);
+  };
+});
+
+/* ================= 3D picking ================= */
+const raycaster = new THREE.Raycaster();
+const ndc = new THREE.Vector2();
+const tip = $('tip');
+let hoveredPart = null;
+
+function pickables() {
+  const list = [];
+  [motor, gearPulse, gearBGroup, slider, brake, camShaft].forEach(g => {
+    g.traverse(o => { if (o.isMesh) list.push(o); });
+  });
+  list.push(crankDisk, roller);
+  return list;
+}
+
+function partOf(o) {
+  let n = o;
+  while (n) {
+    if (n.userData && n.userData.part) return n.userData.part;
+    n = n.parent;
+  }
+  return null;
+}
+
+function tipValue(part) {
+  if (part === 'motor') return `${Math.round(state.rpm)} RPM`;
+  if (part === 'gearA') return `z ${teethA}`;
+  if (part === 'gearB') return `z ${teethB}`;
+  if (part === 'crank') return `r ${Math.round(crankR * 100)} mm`;
+  if (part === 'slider') return `s ${Math.round(crankR * 200)} mm`;
+  if (part === 'cam') return `h ${Math.round(LOBE * 100)} mm`;
+  if (part === 'brake') return state.brake ? (lang === 'zh' ? '接合' : 'engaged') : (lang === 'zh' ? '松开' : 'open');
+  return '';
+}
+
+function hoverAt(e) {
+  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  const hit = raycaster.intersectObjects(pickables(), false)[0];
+  const part = hit ? partOf(hit.object) : null;
+  if (part !== hoveredPart) {
+    hoveredPart = part;
+    canvas.style.cursor = part ? 'pointer' : 'grab';
+  }
+  if (part) {
+    tip.querySelector('b').textContent = pick(PT[part] || { zh: [part, part], en: [part, part] });
+    tip.querySelector('span').textContent = tipValue(part);
+    tip.style.left = Math.min(e.clientX + 16, innerWidth - 150) + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+    tip.style.opacity = 1;
+  } else tip.style.opacity = 0;
+}
+
+canvas.addEventListener('pointermove', hoverAt);
+canvas.addEventListener('pointerleave', () => { tip.style.opacity = 0; hoveredPart = null; });
+
+let downXY = null;
+canvas.addEventListener('pointerdown', e => {
+  downXY = [e.clientX, e.clientY];
+  camAnim = false;
+});
+canvas.addEventListener('pointerup', e => {
+  tip.style.opacity = 0;
+  if (!downXY) return;
+  const moved = Math.hypot(e.clientX - downXY[0], e.clientY - downXY[1]);
+  downXY = null;
+  if (moved > 6) return;
+  ndc.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(ndc, camera);
+  const hit = raycaster.intersectObjects(pickables(), false)[0];
+  if (!hit) return;
+  actOnPart(partOf(hit.object));
+});
+
+function actOnPart(part) {
+  if (!part) return;
+  if (part === 'motor') {
+    state.on = !state.on;
+    toast(state.on ? t('toastMotorOn') : t('toastMotorOff'));
+    if (state.on) selectLessonIfIdle(0);
+  } else if (part === 'gearA') {
+    teethA = TEETH_A[(TEETH_A.indexOf(teethA) + 1) % TEETH_A.length];
+    buildGears(); buildChart(); renderLessons(); renderInfo();
+    toast(t('toastA')(teethA));
+  } else if (part === 'gearB') {
+    teethB = TEETH_B[(TEETH_B.indexOf(teethB) + 1) % TEETH_B.length];
+    buildGears(); buildChart(); renderLessons(); renderInfo();
+    toast(t('toastB')(teethB));
+  } else if (part === 'crank') {
+    crankR = CRANK_R[(CRANK_R.indexOf(crankR) + 1) % CRANK_R.length];
+    syncCrankPin(); buildChart(); renderLessons(); renderInfo();
+    toast(t('toastCrank')(Math.round(crankR * 100)));
+  } else if (part === 'brake') {
+    state.brake = !state.brake;
+    renderLessons(); renderInfo();
+    toast(state.brake ? t('toastBrakeOn') : t('toastBrakeOff'));
+  } else if (part === 'slider') selectLesson(5);
+  else if (part === 'cam') selectLesson(6);
+}
+
+function selectLessonIfIdle(i) { if (cur !== i) selectLesson(i); }
+
+/* ================= view bar ================= */
+document.querySelectorAll('.viewbar button').forEach(b => {
+  b.onclick = () => {
+    const v = b.dataset.view;
+    const target = controls.target.clone();
+    const off = camera.position.clone().sub(target);
+    if (v === 'left' || v === 'right') {
+      const ang = (v === 'left' ? 1 : -1) * Math.PI / 8;
+      off.applyAxisAngle(new THREE.Vector3(0, 1, 0), ang);
+      flyTo(target.clone().add(off), target);
+    } else if (v === 'in' || v === 'out') {
+      off.multiplyScalar(v === 'in' ? 0.82 : 1.22);
+      flyTo(target.clone().add(off), target);
+    } else if (v === 'reset') {
+      flyTo(HOME_POS.clone(), HOME_TARGET.clone());
+    } else if (v === 'top') {
+      const d = camera.position.distanceTo(target);
+      flyTo(target.clone().add(new THREE.Vector3(0.01, d, 0.14)), target);
+    }
+  };
+});
+
+/* ================= keyboard ================= */
+const keys = Object.create(null);
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  keys[e.code] = true;
+  if (e.code === 'Space') { e.preventDefault(); state.on = !state.on; toast(state.on ? t('toastMotorOn') : t('toastMotorOff')); }
+  if (e.code === 'KeyR') flyTo(HOME_POS.clone(), HOME_TARGET.clone());
+  if (e.code === 'KeyT') {
+    const d = camera.position.distanceTo(controls.target);
+    flyTo(controls.target.clone().add(new THREE.Vector3(0.01, d, 0.14)), controls.target.clone());
+  }
+  if (e.code === 'BracketRight' && cur < LESSONS.length - 1) selectLesson(cur + 1);
+  if (e.code === 'BracketLeft' && cur > 0) selectLesson(cur - 1);
+  if (e.code === 'Escape') closeModal();
+});
+addEventListener('keyup', e => { keys[e.code] = false; });
+
+function handleKeys(dt) {
+  const speed = 7 * dt;
+  const fwd = new THREE.Vector3();
+  camera.getWorldDirection(fwd); fwd.y = 0; fwd.normalize();
+  const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0));
+  const move = new THREE.Vector3();
+  if (keys.KeyW) move.add(fwd);
+  if (keys.KeyS) move.sub(fwd);
+  if (keys.KeyA) move.sub(right);
+  if (keys.KeyD) move.add(right);
+  if (move.lengthSq() > 0) {
+    camAnim = false;
+    move.normalize().multiplyScalar(speed);
+    camera.position.add(move);
+    controls.target.add(move);
+  }
+  if (keys.KeyQ || keys.KeyE) {
+    camAnim = false;
+    const ang = (keys.KeyQ ? 1 : -1) * 1.5 * dt;
+    const off = camera.position.clone().sub(controls.target);
+    off.applyAxisAngle(new THREE.Vector3(0, 1, 0), ang);
+    camera.position.copy(controls.target).add(off);
+  }
+}
+
+/* ================= loop ================= */
+const clock = new THREE.Clock();
+let frame = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05);
+  updateMotion(dt);
+
+  if (camAnim) {
+    const k = 1 - Math.exp(-dt * 5);
+    camera.position.lerp(camGoalPos, k);
+    controls.target.lerp(camGoalTarget, k);
+    if (camera.position.distanceTo(camGoalPos) < 0.03) camAnim = false;
+  }
+  handleKeys(dt);
+  controls.update();
+  renderer.render(scene, camera);
+  updateTags(state.tags !== false);
+  if (++frame % 2 === 0) updateChartCursor();
+}
+/* ================= live refresh ================= */
+function refreshLive() {
+  if (document.hidden) return;
+  lessonLis.forEach((li, i) => {
+    const el = li.querySelector('.st');
+    const v = statFor(i);
+    if (el.textContent !== v) el.textContent = v;
+  });
+  if (curTab === 'ratio') renderInfo();
+  else if (curTab === 'parts') {
+    const keys = Object.keys(PT);
+    infoContent.querySelectorAll('.parts-list li').forEach((li, k) => {
+      const idx = LESSONS.findIndex(x => x.key === keys[k]);
+      const small = li.querySelector('small');
+      const v = statFor(idx);
+      if (small && small.textContent !== v) small.textContent = v;
+    });
+  }
+}
+
+/* ================= resize ================= */
+function onResize() {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+}
+addEventListener('resize', onResize);
+
+/* ================= init ================= */
+const loader = $('loader');
+const loaderFill = $('loaderFill');
+const loaderStep = $('loaderStep');
+loaderFill.style.width = '26%';
+loaderStep.textContent = 'MESHING GEARS';
+buildGears();
+buildChart();
+loaderFill.style.width = '72%';
+loaderStep.textContent = 'BINDING CONTROLS';
+applyLang();
+renderLessons();
+renderInfo();
+
+onResize();
+animate();
+setInterval(refreshLive, 480);
+
+requestAnimationFrame(() => {
+  loaderFill.style.width = '100%';
+  loaderStep.textContent = 'READY';
+  setTimeout(() => loader.classList.add('gone'), 380);
+});
+
+/* pause the sim when the tab is hidden */
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) clock.getDelta();
+});
+</script>
+
+
+
+
+
+
+
+
+</body>
+</html>
